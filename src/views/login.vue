@@ -170,6 +170,7 @@
 import { ref, defineProps, defineEmits } from 'vue'
 import { useToast } from 'vue-toast-notification'
 import { useUserStore } from '../store/user'
+import { httpGet,httpPost } from '../utils/http'  
 
 const props = defineProps({
   show: Boolean
@@ -200,13 +201,37 @@ const loading = ref(false)
 const handleLogin = async () => {
   loading.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    // 登录成功后，将状态保存到pinia
-    userStore.login(form.value.username, form.value.rememberMe)
-    useToast().success('登录成功！')
-    emit('close')
+      httpPost('/api/login',{
+        username: form.value.username,
+        password: form.value.password,
+        rememberMe: form.value.rememberMe
+      }
+    ).then(res=>{
+        if (res.status =='success') {
+          useToast().success('登录成功！')
+          // 缓存token
+        localStorage.setItem('token', res.data.token)
+        // 将用户信息存储到Pinia
+        const userStore = useUserStore();
+        userStore.login({
+          username: form.value.username,
+          rememberMe: form.value.rememberMe,
+          token: res.data.token,
+          userId: res.data.user.id,
+          phone: res.data.user.phone
+        }
+      );
+          emit('close'); // 登录成功后关闭弹窗
+        } else {
+           localStorage.removeItem('token')
+          useToast().error('登录失败: ' + (res.message || '未知错误'))
+        } 
+      })
   } catch (error) {
-    useToast().error('登录失败，请检查用户名和密码')
+    // 捕获Promise链中的错误
+        console.error('登录请求错误:', error)
+        useToast().error('登录失败: ' + (error.message || '未知错误'))
+
   } finally {
     loading.value = false
   }
