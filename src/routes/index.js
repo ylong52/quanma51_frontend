@@ -7,6 +7,7 @@ export default [
     name: 'Home',
     component: defineAsyncComponent(() => import('@/views/index.vue'))
   },
+ 
   {
     path: '/buyDetail',
     name: 'buyDetail',
@@ -17,6 +18,13 @@ export default [
     name: 'payment',
     component: defineAsyncComponent(() => import('@/views/payment.vue'))
   },
+  {
+    path: '/account',
+    name: 'account',
+    component: defineAsyncComponent(() => import('@/views/account/index.vue'))
+  },
+ 
+  
   {
     path: '/demo1',
     name: 'Demo1',

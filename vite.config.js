@@ -10,10 +10,22 @@ export default defineConfig({
     }
   },
   server: {
-    hmr: true,
+    hmr: {
+      overlay: true,
+      port: 24678
+    },
     watch: {
       usePolling: true,
-      interval: 100
-    }
+      interval: 1000,
+      followSymlinks: false,
+      ignored: ['**/node_modules/**', '**/dist/**']
+    },
+    host: '0.0.0.0',
+    port: 3000,
+    strictPort: false,
+    open: false
+  },
+  optimizeDeps: {
+    include: ['vue', 'vue-router', 'element-plus']
   }
 })
