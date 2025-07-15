@@ -4,6 +4,8 @@ import { request } from '@/utils/request';
 export const login = (data) => request.post('/api/login', data);
 export const logout = () => request.post('/api/logout');
 export const getUserInfo = () => request.get('/api/userInfo');
+export const getProductCategory = () => request.get('/api/product/category');
+export const getProductCategoryLevel2 = () => request.get('/api/product/category/level2');
 
 // 用户管理模块
 export const getUserList = (params) => request.get('/api/users', { params });
@@ -12,6 +14,6 @@ export const updateUser = (id, data) => request.put(`/api/users/${id}`, data);
 export const deleteUser = (id) => request.delete(`/api/users/${id}`);
 
 // 商品管理模块
-export const getProductList = (params) => request.get('/api/products', { params });
+export const getProductList = (params) => request.post('/api/product', { params });
 export const getProductDetail = (id) => request.get(`/api/products/${id}`);
 // 更多接口...    

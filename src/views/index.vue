@@ -66,8 +66,10 @@
 
       <!-- 右侧内容 -->
       <div class="flex-1 flex flex-col gap-4">
-        <ServiceIcons :activeService="activeService" @serviceChange="handleServiceChange" />
-        <ServiceContent :activeService="activeService" />
+        <!-- <ServiceIcons :activeService="activeService" @serviceChange="handleServiceChange" /> -->
+        <ProductsCategoryLevel2 />
+        <!-- <ServiceContent :activeService="activeService" /> -->
+        <productsLists />
       </div>
     </main>
 
@@ -93,7 +95,9 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue';
 import SideMenu from '@/components/SideMenu.vue';
+import productsLists from '@/components/products/lists.vue';
 import ServiceIcons from '@/components/ServiceIcons.vue';
+import ProductsCategoryLevel2 from '@/components/products/ProductsCategoryLevel2.vue';
 import ServiceContent from '@/components/ServiceContent.vue';
 import AgreementPopup from './AgreementPopup.vue';
 import Login from './login.vue';
