@@ -67,7 +67,7 @@
       <!-- 右侧内容 -->
       <div class="flex-1 flex flex-col gap-4">
         <!-- <ServiceIcons :activeService="activeService" @serviceChange="handleServiceChange" /> -->
-        <ProductsCategoryLevel2 />
+        <ProductsCategoryLevel2 :activeService="activeService" @serviceChange="handleServiceChange" />
         <!-- <ServiceContent :activeService="activeService" /> -->
         <productsLists />
       </div>

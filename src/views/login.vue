@@ -104,11 +104,11 @@ const handleLogin = async () => {
       emit('close');
     } else {
       localStorage.removeItem('token')
-      useToast().error('登录失败: ' + (res.message || '未知错误'))
+       
     }
   } catch (error) {
     console.error('登录请求错误:', error)
-    useToast().error('登录失败: ' + (error.message || '未知错误'))
+     
   } finally {
     loading.value = false
   }

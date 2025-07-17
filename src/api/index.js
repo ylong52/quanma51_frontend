@@ -15,5 +15,12 @@ export const deleteUser = (id) => request.delete(`/api/users/${id}`);
 
 // 商品管理模块
 export const getProductList = (params) => request.post('/api/product', { params });
-export const getProductDetail = (id) => request.get(`/api/products/${id}`);
-// 更多接口...    
+export const getProductDetail = (id) => request.get(`/api/product/detail/${id}`);
+
+export const createOrder = (data) => request.post('/api/order/create', data);
+// getOrderInfo
+export const getOrderInfo = (orderNumber) => request.get(`/api/order/orderinfo/${orderNumber}`);
+//payOrder
+export const payOrder = (params) => request.post(`/api/order/pay`, params);
+//cancelOrder
+export const cancelOrder = (orderNumber) => request.post(`/api/order/cancel/${orderNumber}`);

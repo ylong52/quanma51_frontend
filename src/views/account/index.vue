@@ -7,14 +7,15 @@
       <SideMenu :activeMenu="activeMenu" @menuChange="handleMenuChange" />
       <!-- 右侧内容 -->
       <div class="flex-1 flex flex-col gap-4 right-component">
-        <component :is="rightComponent" />
+        <router-view />
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import SideMenu from '@/components/account/slider.vue';
 import Header from '@/components/account/header.vue';
 import AccountInfo from '@/components/account/accountinfo.vue';
@@ -24,10 +25,44 @@ import promotionFeatures from '@/components/account/promotionFeatures.vue';
 
 import userWithdrawal from '@/components/account/userWithdrawal.vue';
 
+const route = useRoute();
+const router = useRouter();
+
 const activeMenu = ref('personalInfo');
+
+watch(
+  () => route.path,
+  (newPath) => {
+    
+    if (newPath.endsWith('/order')) {
+      activeMenu.value = 'productList';
+    }else if (newPath.endsWith('/recharge')) {
+      activeMenu.value = 'recharge';
+    } else if (newPath.endsWith('/userWithdrawal')) {
+      activeMenu.value = 'userWithdrawal';
+    } else if (newPath.endsWith('/promotionFeatures')) {
+      activeMenu.value = 'promotionFeatures';
+    } else {
+      activeMenu.value = 'personalInfo';
+    }
+  },
+  { immediate: true }
+);
 
 const handleMenuChange = (menu) => {
   activeMenu.value = menu;
+  if (menu === 'personalInfo') {
+    router.push('/account');
+  } else if (menu === 'productList') {
+    router.push('/account/order');
+  } else if (menu === 'recharge') {
+    router.push('/account/recharge');
+  } else if (menu === 'userWithdrawal') {
+    router.push('/account/userWithdrawal');
+  } else if (menu === 'promotionFeatures') {
+    router.push('/account/promotionFeatures');
+  }
+  // 其他菜单...
 };
 
 const rightComponent = computed(() => {

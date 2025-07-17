@@ -1,38 +1,64 @@
 import { defineAsyncComponent } from 'vue'
-import { useToast } from 'vue-toast-notification';
+ 
 
 export default [
   {
     path: '/',
     name: 'Home',
-    component: defineAsyncComponent(() => import('@/views/index.vue'))
+    component: () => import('@/views/index.vue')
   },
  
   {
     path: '/buyDetail',
-    name: 'buyDetail',
-    component: defineAsyncComponent(() => import('@/views/buyDetail.vue'))
+    component: () => import('@/views/buyDetail.vue')
   },
   {
     path: '/payment',
     name: 'payment',
-    component: defineAsyncComponent(() => import('@/views/payment.vue'))
+    component: () => import('@/views/payment.vue')
   },
   {
     path: '/account',
     name: 'account',
-    component: defineAsyncComponent(() => import('@/views/account/index.vue'))
+    component: () => import('@/views/account/index.vue'),
+    children: [
+      {
+        path: '', // /account
+        name: 'accountInfo',
+        component: () => import('@/components/account/accountinfo.vue')
+      },
+      {
+        path: 'order', // /account/order
+        name: 'accountOrder',
+        component: () => import('@/components/account/goods.vue')
+      },
+      {
+        path: 'recharge', // /account/recharge
+        name: 'accountRecharge',
+        component: () => import('@/components/account/recharge.vue')
+      },
+      {
+        path: 'userWithdrawal', // /account/userWithdrawal
+        name: 'accountUserWithdrawal',
+        component: () => import('@/components/account/userWithdrawal.vue')
+      },
+      {
+        path: 'promotionFeatures', // /account/promotionFeatures
+        name: 'accountPromotionFeatures',
+        component: () => import('@/components/account/promotionFeatures.vue')
+      } 
+    ]
   },
  
   
   {
     path: '/demo1',
     name: 'Demo1',
-    component: defineAsyncComponent(() => import('@/views/Demo1.vue'))
+    component: () => import('@/views/Demo1.vue')
   },
   {
     path: '/demo2',
     name: 'Demo2',
-    component: defineAsyncComponent(() => import('@/views/Demo2.vue'))
+    component: () => import('@/views/Demo2.vue')
   }
 ] 

@@ -25,21 +25,10 @@
               <template v-if="isLogin">
               <img src="https://picsum.photos/id/64/40/40" alt="用户头像" class="w-10 h-10 rounded-full object-cover">
               <span class="text-sm font-medium text-neutral-700 hidden sm:inline-block">{{ username }}</span>
-            </template>
-            <template v-else>
-             
-              <button class="flex items-center gap-2 px-5 py-2 text-base font-semibold text-primary border-2 border-white rounded-full bg-white hover:bg-accent hover:text-white transition-colors shadow-sm" @click="showLoginPopup = true">
-                <font-awesome-icon icon="sign-in-alt" class="text-lg" /> 登录
-              </button>
-              <button class="flex items-center gap-2 px-5 py-2 text-base font-semibold  text-black bg-accent bg-blue-500 rounded-full border-2 border-white hover:bg-white hover:text-accent transition-colors shadow-sm"  @click="showAgreementPopup = true">
-
-                <font-awesome-icon icon="user-plus" class="text-lg" /> 注册
-              </button> 
+           
             </template>
             </div>
-            <AgreementPopup v-if="showAgreementPopup" @close="(agree) => handleAgreementClose(agree)" />
-
-            <Login :show="showLoginPopup" @close="onLoginClose" />
+             
           </div>
         </div>
       </div>
@@ -60,10 +49,10 @@
         <!-- 订单摘要 -->
         <div class="payment-summary space-y-6">
           <!-- 温馨提示 -->
-          <div class="bg-yellow-50 border border-yellow-200 text-yellow-700 px-5 py-4 rounded-lg flex items-center">
+          <!-- <div class="bg-yellow-50 border border-yellow-200 text-yellow-700 px-5 py-4 rounded-lg flex items-center">
             <i class="fa fa-info-circle mr-3 text-yellow-600"></i>
             <span>温馨提示：请在24小时内使用，否则系统将自动确认收货</span>
-          </div>
+          </div> -->
           <!-- 产品信息核对 -->
           <div class="apple-card">
             <div class="p-6 border-b border-gray-100">
@@ -71,14 +60,14 @@
             </div>
             <div class="p-6">
               <div class="flex items-center bg-gray-50 rounded-lg p-4 mb-5">
-                <img :src="order.img" alt="代金券" class="w-32 h-16 object-cover rounded mr-4">
+                <img :src="order.imgUrl" alt="代金券" class="w-32 h-16 object-cover rounded mr-4">
                 <div class="flex-1">
-                  <div class="font-medium text-gray-800 text-lg">{{ order.title }}</div>
+                  <div class="font-medium text-gray-800 text-lg">{{ order.name }}</div>
                   <div class="flex justify-between mt-2">
-                    <span class="text-sm text-gray-500">数量：x{{ order.count }}</span>
+                    <span class="text-sm text-gray-500">数量：x{{ order.buynumber }}</span>
                     <div>
-                      <span class="text-sm text-gray-400 line-through">¥{{ order.originPrice }}</span>
-                      <span class="ml-3 font-semibold text-gray-900 text-lg">¥{{ order.price }}</span>
+                      <span class="text-sm text-gray-400 line-through">¥{{ order.real_amount }}</span>
+                      <span class="ml-3 font-semibold text-gray-900 text-lg">¥{{ order.total_amount }}</span>
                     </div>
                   </div>
                 </div>
@@ -86,19 +75,16 @@
               <div class="space-y-3 text-sm">
                 <div class="flex justify-between">
                   <span class="text-gray-600">小计</span>
-                  <span>¥{{ order.price }}</span>
+                  <span>¥{{ order.total_amount }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">优惠</span>
-                  <span class="text-green-600">-¥{{ order.discount }}</span>
+                  <span class="text-gray-600">订单号</span>
+                  <span class="text-green-600">{{ orderNumber }}</span>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600">运费</span>
-                  <span>¥0.00</span>
-                </div>
+                 
                 <div class="border-t border-gray-100 mt-4 pt-4 flex justify-between">
                   <span class="font-medium text-lg">实付款</span>
-                  <span class="font-bold text-xl text-primary">¥{{ order.price }}</span>
+                  <span class="font-bold text-xl text-primary">¥{{ order.total_amount }}</span>
                 </div>
               </div>
             </div>
@@ -139,22 +125,22 @@
               </div>
                
               <!-- 倒计时提示 -->
-              <div class="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-6 text-center">
+              <!-- <div class="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-6 text-center">
                 <div class="text-sm text-gray-600 mb-2">请在规定时间内完成支付</div>
                 <div class="text-lg font-medium text-primary">
                   <i class="fa fa-clock-o mr-2"></i>
                   <span>{{ countdownText }}</span>
                 </div>
-              </div>
+              </div> -->
               <!-- 余额信息 -->
               <div class="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-6">
                 <div class="flex justify-between mb-2">
                   <span class="text-gray-600">当前账户余额</span>
-                  <span class="font-medium">¥{{ balance }}</span>
+                  <span class="font-medium">¥{{ order.userbalance }}</span>
                 </div>
-                <div class="text-xs text-gray-500">
-                  <i class="fa fa-info-circle mr-1"></i>支付后余额：¥{{ afterPayBalance }}
-                </div>
+                 <div class="text-xs text-gray-500">
+                  <i class="fa fa-info-circle mr-1"></i>支付后余额：¥{{ order.userbalance - order.total_amount }}
+                </div> 
               </div>
               <!-- 操作按钮 -->
               <div class="flex flex-col space-y-4">
@@ -165,8 +151,7 @@
                   <template v-else-if="paySuccess">
                     <i class="fa fa-check mr-2"></i> 支付成功
                   </template>
-                  <template v-else>
-                    确认并支付 ¥{{ order.price }}
+                  <template v-else>确认并支付 ¥{{ order.total_amount }}
                   </template>
                 </button>
                 <button class="apple-btn-outline text-lg" :disabled="paying || paySuccess" @click="handleCancel">
@@ -207,25 +192,25 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router';
-
+import { useRouter,useRoute } from 'vue-router';
+import { useToast } from 'vue-toast-notification';
+const toast = useToast();
 import { useUserStore } from '../store/user';
+import * as api from '@/api/index.js';
 // 获取用户store和路由
 const userStore = useUserStore();
 const router = useRouter();
+const route = useRoute();
 
+const orderNumber = ref(route.query.order_number);
+ 
 // 登录状态
 const isLogin = computed(() => userStore.isLoggedIn);
 const username = computed(() => userStore.username);
 
 // 订单数据
 const order = ref({
-  img: 'https://picsum.photos/id/26/120/60',
-  title: '10元代金券・8开头',
-  count: 1,
-  originPrice: 10.00,
-  price: 9.68,
-  discount: 0.32
+
 })
 
 const payType = ref('balance')
@@ -270,20 +255,23 @@ const clearPasswordTip = () => {
   passwordTip.value = ''
 }
 
-const handlePay = () => {
+const handlePay =  async() => {
   if (paying.value || paySuccess.value) return
   if (!/^\d{6}$/.test(payPassword.value)) {
     passwordTip.value = '请输入正确的6位数字支付密码'
     return
   }
   paying.value = true
-  passwordTip.value = ''
-  setTimeout(() => {
-    paying.value = false
+  // 调用支付接口
+  const res = await api.payOrder({orderNumber: orderNumber.value, payPassword: payPassword.value});
+  console.log("res >>>>",res);
+ 
+  if(res.status == 'success'){
     paySuccess.value = true
-    balance.value = afterPayBalance.value
-    passwordTip.value = ''
-  }, 2000)
+  }else{
+    toast.error(res.msg);
+    paying.value = false;
+  }
 }
 
 // 返回首页
@@ -291,13 +279,45 @@ const goToHome = () => {
   router.push('/');
 };
  
-const handleCancel = () => {
-  if (paying.value || paySuccess.value) return
+const handleCancel = async() => {
+  if ( paySuccess.value) return
+ 
+  // toast.confirm('确定要取消订单吗？', {
+  //   confirmButtonText: '确定',
+  //   cancelButtonText: '取消',
+  //   type: 'warning'
+  // }).then(async() => {
+  //   const res = await api.cancelOrder(orderNumber.value);
+  // }).catch(() => {
+  //   return;
+  // }).finally(() => {
+  //   paying.value = false;
+  //   router.push('/')
+  // })
+
   if (confirm('确定要取消订单吗？')) {
-    clearInterval(interval)
+    const res = await api.cancelOrder(orderNumber.value);
+    if(res.status == 'success'){
+      toast.success(res.msg);
+    }else{
+      toast.error(res.msg);
+    }
     router.push('/')
   }
 }
+
+const getOrderInfo = async () => {
+  const res = await api.getOrderInfo(orderNumber.value);  
+ 
+  res.order.total_amount = res.order.real_amount ;
+  order.value = res.order;
+  console.log("order >>>>",order.value);
+}
+
+onMounted(() => {
+  getOrderInfo();
+})
+
 </script>
 
 <style scoped>

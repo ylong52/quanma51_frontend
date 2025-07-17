@@ -21,7 +21,7 @@
                <span class="text-xs bg-blue-100 text-blue-500 px-2 py-0.5 rounded whitespace-nowrap">{{ item.type }}</span>  
             </div>
             <div class="flex justify-end mt-2">
-                <button class="px-3 py-1 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
+                <button class="px-3 py-1 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary/90 transition-colors" @click="gotoDetail(item.id)">
                 购买
                 </button>
             </div>
@@ -54,7 +54,9 @@
 <script setup>
 import { defineProps, defineEmits, onMounted,ref } from 'vue';
 import * as api from '@/api/index.js';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 
 onMounted(async () => {
   await getProductList();
@@ -67,6 +69,14 @@ const getProductList = async () => {
   productList.value = res.data;
 }
 
+const gotoDetail = async(id) => {
+  router.push({
+    path: '/buyDetail',
+    query: {
+      id: id
+    }
+  })
+}
 
 </script>
 

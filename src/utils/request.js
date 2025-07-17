@@ -40,8 +40,8 @@ service.interceptors.response.use(
         showError('请求参数错误', res.message);
         return Promise.reject(res);
       case 401:
-        showError('未授权', '登录状态已过期，请重新登录');
-        redirectToLogin();
+        showError('未授权', '登录状态失败或已过期，请重新登录');
+        // redirectToLogin();
         return Promise.reject(res);
       case 403:
         showError('权限不足', '您没有权限执行此操作');
@@ -66,8 +66,9 @@ service.interceptors.response.use(
       return Promise.resolve({});
     }
     if (error.status == 401) {
-      showError('未授权', '登录状态已过期，请重新登录');
-      redirectToLogin();
+      showError('未授权', '登录状态失败或已过期，请重新登录');
+
+      // redirectToLogin();
       return Promise.reject({});
     }
     if (error.status == 403) {
