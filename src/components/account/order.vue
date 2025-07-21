@@ -6,12 +6,14 @@
       <div class="apple-card mb-6">
         <div class="p-6">
           <!-- 订单状态选项卡 -->
-          <el-tabs v-model="activeTab" class="mb-6">
+          <el-tabs v-model="activeTab" class="mb-6" @tab-change="handleTabChange">
+            <!-- 订单状态,0未支付，1表示成功,2表示失败，3表示取消 -->
             <el-tab-pane label="全部" name="all"></el-tab-pane>
-            <el-tab-pane label="待付款" name="pending"></el-tab-pane>
-            <el-tab-pane label="待发货" name="shipping"></el-tab-pane>
-            <el-tab-pane label="待收货" name="received"></el-tab-pane>
-            <el-tab-pane label="已完成" name="completed"></el-tab-pane>
+            <el-tab-pane label="成功" name="1"></el-tab-pane>
+            <el-tab-pane label="未支付" name="0"></el-tab-pane>
+          
+        
+            <el-tab-pane label="取消" name="3"></el-tab-pane>
           </el-tabs>
           <!-- 搜索和筛选 -->
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
@@ -28,78 +30,82 @@
               </el-input>
             </div>
             <div class="flex items-center space-x-3">
-              <el-select v-model="timeFilter" placeholder="时间范围" class="w-40">
+              <el-select v-model="timeFilter" placeholder="时间范围" class="w-40" @change="handleTimeFilterChange">
                 <el-option label="全部时间" value="all"></el-option>
+                <el-option label="最近一周" value="week"></el-option>
                 <el-option label="最近一个月" value="month"></el-option>
                 <el-option label="最近三个月" value="quarter"></el-option>
                 <el-option label="最近半年" value="halfyear"></el-option>
               </el-select>
-              <el-select v-model="amountFilter" placeholder="金额范围" class="w-40">
-                <el-option label="全部金额" value="all"></el-option>
-                <el-option label="0-100元" value="0-100"></el-option>
-                <el-option label="100-500元" value="100-500"></el-option>
-                <el-option label="500-1000元" value="500-1000"></el-option>
-                <el-option label="1000元以上" value="1000+"></el-option>
-              </el-select>
+               
             </div>
           </div>
+       
           <!-- 订单列表 -->
           <div class="space-y-4">
-            <el-card class="order-item " v-for="order in filteredOrders" :key="order.id">
+            <!-- 加载状态 -->
+            <div v-if="isLoading" class="flex justify-center items-center py-8">
+              <el-loading-spinner></el-loading-spinner>
+              <span class="ml-2">加载中...</span>
+            </div>
+            <!-- 空状态 -->
+            <div v-else-if="filteredOrders.length === 0" class="flex justify-center items-center py-8 text-gray-500">
+              暂无订单数据
+            </div>
+            <!-- 订单列表 -->
+            <el-card v-else class="order-item " v-for="order in filteredOrders" :key="order.id">
               <div class="el-card__header flex justify-between items-center border-b border-gray-100">
                 <div class="text-gray-600  mt-2 ">
-                  <span class="text-bold text-black ">订单号：{{ order.orderNumber }}</span>
-                  <span class="ml-4">{{ order.createTime }}</span>
+                  <span class="text-bold text-black ">订单号：{{ order.order_number }}</span>
+                  <span class="ml-4">{{ order.created_at }}</span>
                 </div>
                 <div class="font-medium" :class="{
-                  'text-orange-500': order.status === 'pending',
-                  'text-blue-500': order.status === 'shipping',
-                  'text-purple-500': order.status === 'received',
-                  'text-green-500': order.status === 'completed',
-                  'text-gray-500': order.status === 'cancelled'
+                  'text-orange-500': order.status === 0,   // 未支付
+                  'text-green-500': order.status === 1,    // 成功
+                  'text-gray-500': order.status === 2,     // 失败
+                  'text-red-500': order.status === 3       // 取消
                 }">
-                  <font-awesome-icon v-if="order.status === 'pending'" icon="clock" class="mr-1" />
-                  <font-awesome-icon v-if="order.status === 'shipping'" icon="truck" class="mr-1" />
-                  <font-awesome-icon v-if="order.status === 'received'" icon="box-open" class="mr-1" />
-                  <font-awesome-icon v-if="order.status === 'completed'" icon="check-circle" class="mr-1" />
-                  <font-awesome-icon v-if="order.status === 'cancelled'" icon="ban" class="mr-1" />
-                  {{ order.statusText }}
+                  <font-awesome-icon v-if="order.status === 0" icon="clock" class="mr-1" />
+                  <font-awesome-icon v-if="order.status === 1" icon="check-circle" class="mr-1" />
+                  <font-awesome-icon v-if="order.status === 2" icon="ban" class="mr-1" />
+                  <font-awesome-icon v-if="order.status === 3" icon="times-circle" class="mr-1" />
+                  {{ order.status_text }}
                 </div>
               </div>
               <div class="el-card__body p-0">
                 <div class="border-b border-gray-100">
                   <div class="flex items-center p-4 hover:bg-gray-50 transition-custom">
-                    <img :src="order.productImage" alt="商品图片" class="w-20 h-20 object-cover rounded mr-4">
+                    <img :src="order.product_img" alt="商品图片" class="w-20 h-20 object-cover rounded mr-4">
                     <div class="flex-1">
-                      <div class="font-medium">{{ order.productName }}</div>
+                      <div class="font-medium">{{ order.product_name }}</div>
                       <div class="text-sm text-gray-500 mt-1">{{ order.productSpec }}</div>
                     </div>
                     <div class="text-right ml-4">
-                      <div class="font-medium">¥{{ order.price }}</div>
-                      <div class="text-sm text-gray-500">x{{ order.quantity }}</div>
+                      <div class="font-medium">¥{{ order.item_price }}</div>
+                      <div class="text-sm text-gray-500">x{{ order.buynumber }}</div>
                     </div>
                   </div>
                 </div>
                 <div class="p-4 flex justify-between items-center">
                   <div class="text-lg font-medium">
-                    总计：<span class="text-primary">¥{{ order.totalAmount }}</span>
+                    总计：<span class="text-primary">¥{{ order.should_amount }}</span>
                   </div>
                   <div class="flex space-x-2">
-                    <el-button v-if="order.status === 'pending'" type="primary" @click="payOrder(order)">
+                    <!-- <el-button v-if="order.status === 0" type="primary" @click="payOrder(order)">
                       <font-awesome-icon icon="credit-card" class="mr-1" />立即付款
                     </el-button>
-                    <el-button v-if="order.status === 'pending'" link @click="cancelOrder(order)">
+                    <el-button v-if="order.status === 0" link @click="cancelOrder(order)">
                       <font-awesome-icon icon="times-circle" class="mr-1" />取消订单
-                    </el-button>
-                    <el-button v-if="order.status === 'received'" type="primary" @click="confirmReceipt(order)">
+                    </el-button> -->
+                    <!-- <el-button v-if="order.status === 1" type="primary" @click="confirmReceipt(order)">
                       <font-awesome-icon icon="check" class="mr-1" />确认收货
                     </el-button>
-                    <el-button v-if="order.status === 'completed'" link @click="viewOrderDetail(order)">
+                    <el-button v-if="order.status === 1" link @click="viewOrderDetail(order)">
                       <font-awesome-icon icon="file-alt" class="mr-1" />查看详情
                     </el-button>
-                    <el-button v-if="order.status === 'completed'" link @click="leaveReview(order)">
+                    <el-button v-if="order.status === 1" link @click="leaveReview(order)">
                       <font-awesome-icon icon="star" class="mr-1" />评价商品
-                    </el-button>
+                    </el-button> -->
                   </div>
                 </div>
               </div>
@@ -122,15 +128,16 @@
       </div>
     </div>
   </main>
+ 
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faHouse, faUser, faList, faClock, faTruck, faBoxOpen, faCheckCircle, faBan, faCreditCard, faTimesCircle, faCheck, faFileAlt, faStar } from '@fortawesome/free-solid-svg-icons'
-
+import { orderList } from '@/api'
 library.add(faHouse, faUser, faList, faClock, faTruck, faBoxOpen, faCheckCircle, faBan, faCreditCard, faTimesCircle, faCheck, faFileAlt, faStar)
 
 // 注册全局组件（如果未全局注册）
@@ -140,138 +147,61 @@ library.add(faHouse, faUser, faList, faClock, faTruck, faBoxOpen, faCheckCircle,
 const activeTab = ref('all')
 const searchKeyword = ref('')
 const timeFilter = ref('all')
-const amountFilter = ref('all')
 const currentPage = ref(1)
 const pageSize = ref(5)
 
 // 模拟订单数据
-const orders = ref([
-  {
-    id: 1,
-    orderNumber: '202307140001',
-    createTime: '2023-07-14 10:30:25',
-    status: 'pending',
-    statusText: '待付款',
-    productImage: 'https://picsum.photos/id/96/200/200',
-    productName: 'iPhone 14 Pro 256GB 深空黑',
-    productSpec: '颜色：深空黑 / 容量：256GB',
-    price: 7999,
-    quantity: 1,
-    totalAmount: 7999
-  },
-  {
-    id: 2,
-    orderNumber: '202307130002',
-    createTime: '2023-07-13 15:45:12',
-    status: 'shipping',
-    statusText: '待发货',
-    productImage: 'https://picsum.photos/id/119/200/200',
-    productName: 'MacBook Air M2 13.6英寸',
-    productSpec: '颜色：银色 / 配置：8核CPU/10核GPU/16GB/512GB',
-    price: 9499,
-    quantity: 1,
-    totalAmount: 9499
-  },
-  {
-    id: 3,
-    orderNumber: '202307120003',
-    createTime: '2023-07-12 09:20:38',
-    status: 'received',
-    statusText: '待收货',
-    productImage: 'https://picsum.photos/id/160/200/200',
-    productName: 'iPad Pro 11英寸 2022款',
-    productSpec: '颜色：深空灰 / 容量：1TB / 蜂窝网络',
-    price: 9299,
-    quantity: 1,
-    totalAmount: 9299
-  },
-  {
-    id: 4,
-    orderNumber: '202307100004',
-    createTime: '2023-07-10 16:15:47',
-    status: 'completed',
-    statusText: '已完成',
-    productImage: 'https://picsum.photos/id/20/200/200',
-    productName: 'Apple Watch Series 8',
-    productSpec: '尺寸：45mm / 颜色：星光色铝金属表壳',
-    price: 3199,
-    quantity: 1,
-    totalAmount: 3199
-  },
-  {
-    id: 5,
-    orderNumber: '202307080005',
-    createTime: '2023-07-08 11:45:21',
-    status: 'completed',
-    statusText: '已完成',
-    productImage: 'https://picsum.photos/id/26/200/200',
-    productName: 'AirPods Pro 2',
-    productSpec: '主动降噪 / 空间音频',
-    price: 1899,
-    quantity: 1,
-    totalAmount: 1899
-  },
-  {
-    id: 6,
-    orderNumber: '202307050006',
-    createTime: '2023-07-05 14:30:16',
-    status: 'cancelled',
-    statusText: '已取消',
-    productImage: 'https://picsum.photos/id/96/200/200',
-    productName: 'iPhone 14 128GB 蓝色',
-    productSpec: '颜色：蓝色 / 容量：128GB',
-    price: 5999,
-    quantity: 1,
-    totalAmount: 5999
-  }
-])
+const orders = ref([])
 
 // 计算过滤后的订单总数（不分页）
 const filteredOrdersTotal = computed(() => {
   let filtered = [...orders.value]
   if (activeTab.value !== 'all') {
-    filtered = filtered.filter(order => order.status === activeTab.value)
+    // 直接使用数字状态值进行过滤
+    filtered = filtered.filter(order => order.status === parseInt(activeTab.value))
   }
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase()
+    console.log('搜索过滤(总数):', keyword, '原始数据量:', filtered.length)
     filtered = filtered.filter(order =>
-      order.orderNumber.includes(keyword) ||
-      order.productName.toLowerCase().includes(keyword)
+      (order.order_number && order.order_number.includes(keyword)) ||
+      (order.product_name && order.product_name.toLowerCase().includes(keyword))
     )
+    console.log('搜索后数据量(总数):', filtered.length)
   }
   if (timeFilter.value !== 'all') {
     if (timeFilter.value === 'month') {
       filtered = filtered.filter((_, index) => index < 3)
     } else if (timeFilter.value === 'quarter') {
       filtered = filtered.filter((_, index) => index < 5)
-    }
-  }
-  if (amountFilter.value !== 'all') {
-    const [min, max] = amountFilter.value.split('-')
-    if (max) {
-      filtered = filtered.filter(order =>
-        order.totalAmount >= parseInt(min) &&
-        order.totalAmount <= parseInt(max)
-      )
-    } else {
-      filtered = filtered.filter(order => order.totalAmount >= parseInt(min))
     }
   }
   return filtered.length
 })
 
 // 计算过滤+分页后的订单
+const isLoading = ref(false);
+
 const filteredOrders = computed(() => {
+  // 如果还在加载中，返回空数组
+  if (isLoading.value) {
+    return [];
+  }
+  
   let filtered = [...orders.value]
+    
   if (activeTab.value !== 'all') {
-    filtered = filtered.filter(order => order.status === activeTab.value)
+    // 直接使用数字状态值进行过滤
+    filtered = filtered.filter(order => order.status === parseInt(activeTab.value))
   }
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase()
+    console.log('搜索过滤(列表):', keyword, '原始数据量:', filtered.length)
     filtered = filtered.filter(order =>
-      order.orderNumber.includes(keyword) ||
-      order.productName.toLowerCase().includes(keyword)
+      (order.order_number && order.order_number.includes(keyword)) ||
+      (order.product_name && order.product_name.toLowerCase().includes(keyword))
     )
+    console.log('搜索后数据量(列表):', filtered.length)
   }
   if (timeFilter.value !== 'all') {
     if (timeFilter.value === 'month') {
@@ -280,17 +210,7 @@ const filteredOrders = computed(() => {
       filtered = filtered.filter((_, index) => index < 5)
     }
   }
-  if (amountFilter.value !== 'all') {
-    const [min, max] = amountFilter.value.split('-')
-    if (max) {
-      filtered = filtered.filter(order =>
-        order.totalAmount >= parseInt(min) &&
-        order.totalAmount <= parseInt(max)
-      )
-    } else {
-      filtered = filtered.filter(order => order.totalAmount >= parseInt(min))
-    }
-  }
+
   // 分页
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
@@ -299,7 +219,20 @@ const filteredOrders = computed(() => {
 
 // 搜索订单
 function searchOrders() {
-  currentPage.value = 1
+  console.log('搜索关键词:', searchKeyword.value)
+  currentPage.value = 1 // 重置到第一页
+}
+
+// 状态选项卡切换事件
+function handleTabChange(tabName) {
+  console.log('状态选项卡切换:', tabName)
+  currentPage.value = 1 // 重置到第一页
+}
+
+// 时间筛选器变化事件
+function handleTimeFilterChange(value) {
+  console.log('时间筛选器变化:', value)
+  currentPage.value = 1 // 重置到第一页
 }
 // 分页相关方法
 function handleSizeChange(newSize) {
@@ -310,7 +243,7 @@ function handleCurrentChange(newPage) {
 }
 // 订单操作方法
 function payOrder(order) {
-  ElMessage.success(`支付订单 ${order.orderNumber}`)
+  ElMessage.success(`支付订单 ${order.order_number}`)
 }
 function cancelOrder(order) {
   ElMessageBox.confirm(
@@ -349,11 +282,44 @@ function confirmReceipt(order) {
   })
 }
 function viewOrderDetail(order) {
-  ElMessage.info(`查看订单 ${order.orderNumber} 详情`)
+  ElMessage.info(`查看订单 ${order.order_number} 详情`)
 }
 function leaveReview(order) {
-  ElMessage.info(`对 ${order.productName} 进行评价`)
+  ElMessage.info(`对 ${order.product_name} 进行评价`)
 }
+
+const total = ref(0)
+const getOrders = async () => {
+  isLoading.value = true; // 开始加载
+  try {
+    const res = await orderList({
+      page: currentPage.value,
+      pageSize: pageSize.value
+    })
+   
+    orders.value = res.data.orders;
+    console.log("orders.value==",orders.value)
+    //分页面
+    currentPage.value = res.data.pagination.current_page;
+    pageSize.value = res.data.pagination.per_page;
+    total.value = res.data.pagination.total;
+    console.log("currentPage.value=",currentPage.value, "pageSize.value=", pageSize.value, "total.value=", total.value)
+  } catch (error) {
+    console.error('获取订单列表失败:', error);
+  } finally {
+    isLoading.value = false; // 加载完成
+  }
+}
+// 监听搜索关键词变化
+watch(searchKeyword, (newValue) => {
+  console.log('搜索关键词变化:', newValue)
+  currentPage.value = 1 // 重置到第一页
+})
+
+onMounted(() => {
+  getOrders()
+})
+
 </script>
 
 <style scoped>

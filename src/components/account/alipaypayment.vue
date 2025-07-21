@@ -99,6 +99,7 @@
                 step="0.01"
                 v-model="customAmount"
                 @input="onCustomAmountInput"
+                @focus="setCustomAmount"
               >
             </div>
             <p class="text-xs text-gray-500 mt-2">最低充值金额：0.01元</p>
@@ -208,17 +209,17 @@ import { ref, computed, onMounted } from 'vue';
 const emit = defineEmits(['close']);
 
 // 状态管理
-const selectedAmount = ref(50);
+const selectedAmount = ref(50); // 默认选中50元
 const customAmount = ref('');
 const isCustomAmount = ref(false);
 const paymentLoading = ref(false);
 
 // 计算属性：当前支付金额
 const paymentAmount = computed(() => {
-  if (isCustomAmount.value && customAmount.value) {
+  if (isCustomAmount.value && customAmount.value && parseFloat(customAmount.value) > 0) {
     return parseFloat(customAmount.value);
   }
-  return selectedAmount.value;
+  return selectedAmount.value || 50; // 确保有默认值
 });
 
 // 方法
@@ -226,17 +227,29 @@ const selectAmount = (amount) => {
   selectedAmount.value = amount;
   isCustomAmount.value = false;
   customAmount.value = '';
+  console.log('选择金额:', amount);
 };
 
 const setCustomAmount = () => {
   isCustomAmount.value = true;
   selectedAmount.value = null;
+  // 聚焦到输入框
+  setTimeout(() => {
+    const input = document.querySelector('input[type="number"]');
+    if (input) {
+      input.focus();
+    }
+  }, 100);
 };
 
 const onCustomAmountInput = () => {
-  if (customAmount.value) {
+  if (customAmount.value && parseFloat(customAmount.value) > 0) {
     isCustomAmount.value = true;
     selectedAmount.value = null;
+  } else {
+    // 如果输入框为空或无效值，重置为默认选择
+    isCustomAmount.value = false;
+    selectedAmount.value = 50;
   }
 };
 
@@ -298,7 +311,11 @@ const FaqItem = {
 
 // 页面加载时的初始化
 onMounted(() => {
-  // 可以添加页面初始化逻辑
+  // 确保默认选中50元
+  selectedAmount.value = 50;
+  isCustomAmount.value = false;
+  customAmount.value = '';
+  console.log('充值页面初始化完成，默认金额:', selectedAmount.value);
 });
 </script>
 

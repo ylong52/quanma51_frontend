@@ -1,369 +1,422 @@
 <template>
-    <div class="font-inter bg-gray-100 min-h-screen">
-      <!-- 主要内容区 -->
-      <main class="container mx-auto px-4 py-8">
-         
-          <!-- 提现表单 -->
-    <div class="bg-white rounded-xl shadow-card p-4 mb-6">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">发起提现</h3>
-        <div class="text-sm text-gray-500">可用余额: <span class="text-primary font-medium">¥2,358.60</span></div>
+  <div class="container mx-auto px-4 py-8">
+
+    <!-- 页面标题 -->
+    <div class="mb-6">
+      <h1 class="text-2xl font-semibold text-gray-800">我的提现记录</h1>
+    </div>
+
+    <!-- 余额信息 -->
+    <el-card class="mb-6">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <span>当前余额 </span>
+          <el-button type="primary" size="medium" @click="showWithdrawalDialog">
+            <i class="fa fa-download"></i> 提现
+          </el-button>
+        </div>
+      </template>
+      <div class="p-4">
+        <span class="text-gray-600">当前可用余额：</span>
+        <span class="text-success font-bold text-xl">¥{{ currentBalance }}</span>
+      </div>
+
+      <div v-if="showWithdrawal">
+        <el-input
+          v-model="withdrawalAmount"
+          placeholder="请输入提现金额"
+          type="number"
+          min="0.01"
+          size="default"
+          style="width: 200px;"
+        ></el-input>
+        <el-button type="primary" @click="createWithdrawal" size="default">提现</el-button>
       </div>
       
-      <div class="form-row">
-        <div class="form-item">
-          <label class="block text-sm font-medium text-gray-700 mb-1">提现金额</label>
-          <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">¥</span>
-            <input 
-              type="number" 
-              id="withdrawAmount" 
-              placeholder="请输入提现金额" 
-              class="w-full px-3 py-2 pl-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-              min="10"
-              step="0.01"
+    </el-card>
+
+    <!-- 筛选区域 -->
+    <div class="mb-6">
+      <el-row :gutter="20">
+        <el-col :span="6">
+          <el-select v-model="status" placeholder="提现状态" clearable size="medium">
+            <el-option label="全部" value=""></el-option>
+            <el-option label="待处理" value="0"></el-option>
+            <el-option label="已到账" value="1"></el-option>
+            <el-option label="失败" value="2"></el-option>
+          </el-select>
+        </el-col>
+
+        <el-col :span="6">
+          <el-input v-model="withdrawalId" placeholder="提现单号" clearable size="medium"></el-input>
+        </el-col>
+
+        <el-col :span="6">
+          <el-button type="primary" @click="handleQuery" size="medium">
+            <i class="fa fa-search"></i> 查询
+          </el-button>
+          <el-button @click="resetFilters" size="medium">
+            <i class="fa fa-refresh"></i> 重置
+          </el-button>
+        </el-col>
+      </el-row>
+    </div>
+
+    <!-- 列表区域 -->
+    <div>
+      <!-- 有数据时显示表格 -->
+      <el-table :data="filteredData" border stripe fit highlight-current-row size="medium"
+        :header-cell-style="{ background: '#f5f7fa', color: '#606266' }" v-loading="loading">
+        <el-table-column type="index" label="序号" width="80"></el-table-column>
+        <el-table-column prop="id" label="提现ID" width="120"></el-table-column>
+        <el-table-column prop="withdrawal_no" label="提现单号" width="180"></el-table-column>
+        <el-table-column prop="withdrawal_time" label="申请时间" width="180"></el-table-column>
+        <el-table-column prop="amount" label="提现金额" width="120">
+          <template #default="{ row = {} }">
+            <span class="text-primary font-weight-bold">¥{{ row.amount }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="handling_fee" label="手续费" width="120">
+          <template #default="{ row = {} }">
+            <span class="text-gray-600">¥{{ row.handling_fee }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="actual_amount" label="实际到账" width="120">
+          <template #default="{ row = {} }">
+            <span v-if="row.actual_amount" class="text-success font-weight-bold">¥{{ row.actual_amount }}</span>
+            <span v-else class="text-gray-400">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="withdrawal_method" label="提现方式" width="120">
+          <template #default="{ row = {} }">
+            <span v-if="row.withdrawal_method == 1" class="text-info">银行卡</span>
+            <span v-else-if="row.withdrawal_method == 2" class="text-primary">支付宝</span>
+            <span v-else class="text-gray-500">其他</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="withdrawal_status" label="提现状态" width="120">
+          <template #default="{ row = {} }">
+            <span v-if="row.withdrawal_status === 0" class="text-warning">待处理</span>
+            <span v-else-if="row.withdrawal_status === 1" class="text-success">已到账</span>
+            <span v-else-if="row.withdrawal_status === 2" class="text-danger">失败</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="arrival_time" label="到账时间" width="180">
+          <template #default="{ row = {} }">
+            <span v-if="row.arrival_time">{{ row.arrival_time }}</span>
+            <span v-else class="text-gray-400">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="{ row = {} }">
+            <el-button 
+              v-if="row.withdrawal_status === 0 || row.withdrawal_status === 2" 
+              link 
+              size="small" 
+              @click="deleteWithdrawal(row)"
+              type="danger"
             >
-          </div>
-          <p class="text-xs text-gray-500 my-4">最低提现金额：10元</p>
-        </div>
-        
-        <div class="form-item">
-          <label class="block text-sm font-medium text-gray-700 mb-1">提现方式</label>
-          <select 
-            id="withdrawMethod" 
-            class="w-full py-2 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary appearance-none bg-white"
-          >
-            <option value="bank">银行卡(****1234)</option>
-            <option value="alipay">支付宝(****4321)</option>
-            <option value="wechat">微信(****5678)</option>
-          </select>
-        </div>
-        
-        <div class="form-item self-end">
-          <button 
-            id="submitWithdraw" 
-            class="bg-primary hover:bg-primary/90 text-white font-medium mt-4 py-2 px-6 rounded-lg transition-all-300 flex items-center w-full sm:w-auto"
-          >
-            <i class="fa fa-download mr-2"></i> 确认提现
-          </button>
-        </div>
-      </div>
-      
-      <div class="mt-4 text-sm text-gray-500 flex flex-wrap gap-x-6 gap-y-2">
-        <!-- <div><i class="fa fa-info-circle text-blue-500 mr-1"></i> 手续费：提现金额的1%</div> -->
-        <div><i class="fa fa-info-circle text-blue-500 mr-1"></i> 预计到账时间：1-3个工作日</div>
-      </div>
+              删除
+            </el-button>
+            <span v-else class="text-gray-400 text-sm">-</span>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
 
-        <!-- 提现列表 -->
-        <div class="bg-white rounded-xl shadow-card overflow-hidden">
-          <div class="p-6 border-b border-gray-100">
-            <div class="flex justify-between items-center">
-              <h2 class="text-lg font-semibold">我的提现记录</h2>
-              <div class="text-sm text-gray-500">共 <span class="text-primary font-medium">{{ total }}</span> 条记录</div>
-            </div>
-          </div>
-          
-          <!-- 筛选区域 -->
-          <div class="p-6 border-b border-gray-100">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">时间范围</label>
-                <div class="relative">
-                  <el-select v-model="filters.timeRange" placeholder="请选择时间范围" class="w-full">
-                    <el-option v-for="option in timeRangeOptions" :key="option.value" :label="option.label" :value="option.value"></el-option>
-                  </el-select>
-                </div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">提现状态</label>
-                <div class="relative">
-                  <el-select v-model="filters.status" placeholder="请选择提现状态" class="w-full">
-                    <el-option v-for="option in statusOptions" :key="option.value" :label="option.label" :value="option.value"></el-option>
-                  </el-select>
-                </div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">提现方式</label>
-                <div class="relative">
-                  <el-select v-model="filters.method" placeholder="请选择提现方式" class="w-full">
-                    <el-option v-for="option in methodOptions" :key="option.value" :label="option.label" :value="option.value"></el-option>
-                  </el-select>
-                </div>
-              </div>
-            </div>
-            <div class="mt-4 flex justify-end space-x-3">
-              <el-button @click="resetFilters" link>
-                <font-awesome-icon icon="refresh" class="mr-1" /> 重置
-              </el-button>
-              <el-button @click="fetchWithdrawals" type="primary">
-                <font-awesome-icon icon="search" class="mr-1" /> 查询
-              </el-button>
-            </div>
-          </div>
-          
-          <!-- 列表内容 -->
-          <el-table :data="withdrawalList" stripe border class="w-full">
-            <el-table-column prop="id" label="提现ID" align="left"></el-table-column>
-            <el-table-column prop="applyTime" label="申请时间" align="left"></el-table-column>
-            <el-table-column prop="amount" label="提现金额" align="left">
-              <template #default="scope">
-                <span class="text-primary font-medium">¥{{ scope.row.amount }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="fee" label="手续费" align="left"></el-table-column>
-            <el-table-column prop="actualAmount" label="实际到账" align="left">
-              <template #default="scope">
-                <span v-if="scope.row.actualAmount" class="text-success font-medium">¥{{ scope.row.actualAmount }}</span>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="method" label="提现方式" align="left">
-              <template #default="scope">
-                <div class="flex items-center">
-                  <font-awesome-icon :icon="getMethodIcon(scope.row.method)" class="text-blue-500 mr-2" />
-                  <span>{{ scope.row.methodName }}</span>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column prop="status" label="提现状态" align="left">
-              <template #default="scope">
-                <el-tag :type="getStatusType(scope.row.status)">{{ getStatusText(scope.row.status) }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" align="left">
-              <template #default="scope">
-                <el-button link size="small" @click="viewDetail(scope.row)">详情</el-button>
-                <el-button v-if="scope.row.status === 'pending'" link size="small" @click="cancelWithdrawal(scope.row.id)">取消</el-button>
-                <el-button v-if="scope.row.status === 'rejected'" link size="small" @click="reapply(scope.row.id)">重新申请</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          
-          <!-- 分页 -->
-          <div class="p-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center">
-            <div class="text-sm text-gray-500 mb-4 sm:mb-0">
-              显示 <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span> 到 <span class="font-medium">{{ Math.min(currentPage * pageSize, total) }}</span> 条，共 <span class="font-medium">{{ total }}</span> 条记录
-            </div>
-            <el-pagination
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
-              :current-page="currentPage"
-              :page-sizes="[5, 10, 20, 50]"
-              :page-size="pageSize"
-              layout="total, sizes, prev, pager, next, jumper"
-              :total="total">
-            </el-pagination>
-          </div>
-        </div>
-      </main>
+    <!-- 分页区域 -->
+    <div class="mt-8 text-center">
+      <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage"
+        :page-sizes="[10, 20, 50, 100]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper"
+        :total="total"></el-pagination>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref, onMounted, computed } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { library } from '@fortawesome/fontawesome-svg-core'
-  import { faRefresh, faSearch, faUser, faWallet, faCreditCard, faHistory, faDownload, faListAlt, faTrophy, faGift, faCog, faChevronLeft, faChevronRight, faInfoCircle, faTimes, faClock, faCheck } from '@fortawesome/free-solid-svg-icons'
-  import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-  import { ElTable, ElTableColumn, ElSelect, ElOption, ElButton, ElTag, ElPagination } from 'element-plus'
-  
-  // 注册FontAwesome图标
-  library.add(
-    faRefresh, faSearch, faUser, faWallet, faCreditCard, faHistory, faDownload, 
-    faListAlt, faTrophy, faGift, faCog, faChevronLeft, faChevronRight, faInfoCircle, 
-    faTimes, faClock, faCheck
-  )
-  
-  // 组件注册
-  const components = {
-    FontAwesomeIcon,
-    ElTable,
-    ElTableColumn,
-    ElSelect,
-    ElOption,
-    ElButton,
-    ElTag,
-    ElPagination
-  }
-  
-  const router = useRouter()
-  
-  // 状态管理
-  const withdrawalList = ref([])
-  const total = ref(28)
-  const currentPage = ref(1)
-  const pageSize = ref(5)
-  const filters = ref({
-    timeRange: 'all',
-    status: 'all',
-    method: 'all'
-  })
-  
-  // 选项数据
-  const timeRangeOptions = [
-    { value: 'all', label: '全部' },
-    { value: 'today', label: '今天' },
-    { value: 'yesterday', label: '昨天' },
-    { value: '7days', label: '近7天' },
-    { value: 'month', label: '本月' },
-    { value: 'lastMonth', label: '上月' },
-    { value: 'custom', label: '自定义' }
-  ]
-  
-  const statusOptions = [
-    { value: 'all', label: '全部' },
-    { value: 'pending', label: '审核中' },
-    { value: 'approved', label: '已通过' },
-    { value: 'rejected', label: '已拒绝' },
-    { value: 'processing', label: '提现中' },
-    { value: 'completed', label: '已到账' },
-    { value: 'cancelled', label: '已取消' }
-  ]
-  
-  const methodOptions = [
-    { value: 'all', label: '全部' },
-    { value: 'bank', label: '银行卡' },
-    { value: 'alipay', label: '支付宝' },
-    { value: 'wechat', label: '微信' }
-  ]
-  
-  // 获取提现方式图标
-  const getMethodIcon = (method) => {
-    switch(method) {
-      case 'bank':
-        return 'credit-card'
-      case 'alipay':
-        return 'credit-card'
-      case 'wechat':
-        return 'credit-card'
-      default:
-        return 'question-circle'
-    }
-  }
-  
-  // 获取状态文本
-  const getStatusText = (status) => {
-    const statusMap = {
-      'pending': '审核中',
-      'approved': '已通过',
-      'rejected': '已拒绝',
-      'processing': '提现中',
-      'completed': '已到账',
-      'cancelled': '已取消'
-    }
-    return statusMap[status] || '未知状态'
-  }
-  
-  // 获取状态标签类型
-  const getStatusType = (status) => {
-    const typeMap = {
-      'pending': 'info',
-      'approved': 'primary',
-      'rejected': 'danger',
-      'processing': 'warning',
-      'completed': 'success',
-      'cancelled': 'info'
-    }
-    return typeMap[status] || 'default'
-  }
-  
-  // 生命周期钩子
-  onMounted(() => {
-    fetchWithdrawals()
-  })
-  
-  // 获取提现列表
-  const fetchWithdrawals = () => {
-    // 模拟API请求
-    const mockData = [
-      { id: 3001, applyTime: '2025-07-15 10:20', amount: '500.00', fee: '5.00', actualAmount: '495.00', method: 'bank', methodName: '银行卡(****1234)', status: 'completed' },
-      { id: 3002, applyTime: '2025-07-12 16:45', amount: '200.00', fee: '2.00', actualAmount: '198.00', method: 'alipay', methodName: '支付宝(****4321)', status: 'completed' },
-      { id: 3003, applyTime: '2025-07-10 09:10', amount: '1000.00', fee: '10.00', actualAmount: null, method: 'wechat', methodName: '微信(****5678)', status: 'pending' },
-      { id: 3004, applyTime: '2025-07-08 14:30', amount: '300.00', fee: '3.00', actualAmount: null, method: 'bank', methodName: '银行卡(****8765)', status: 'rejected' },
-      { id: 3005, applyTime: '2025-07-05 11:50', amount: '800.00', fee: '8.00', actualAmount: '792.00', method: 'alipay', methodName: '支付宝(****4321)', status: 'completed' }
-    ]
-    
-    // 模拟过滤和分页
-    withdrawalList.value = mockData
-  }
-  
-  // 重置筛选条件
-  const resetFilters = () => {
-    filters.value = {
-      timeRange: 'all',
-      status: 'all',
-      method: 'all'
-    }
-  }
-  
-  // 分页事件处理
-  const handleSizeChange = (newSize) => {
-    pageSize.value = newSize
-    fetchWithdrawals()
-  }
-  
-  const handleCurrentChange = (newPage) => {
-    currentPage.value = newPage
-    fetchWithdrawals()
-  }
-  
-  // 操作方法
-  const viewDetail = (row) => {
-    router.push({ name: 'WithdrawalDetail', params: { id: row.id } })
-  }
-  
-  const cancelWithdrawal = (id) => {
-    ElMessageBox.confirm(
-      '确定要取消该提现申请吗？',
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    ).then(() => {
-      // 模拟取消操作
-      ElMessage({
-        type: 'success',
-        message: '提现申请已取消'
-      })
-      fetchWithdrawals()
-    }).catch(() => {
-      // 取消操作
-    })
-  }
-  
-  const reapply = (id) => {
-    router.push({ name: 'WithdrawalReapply', params: { id } })
-  }
-  </script>
-  
-  <style scoped>
- 
 
-/* 自定义样式 - 只保留 Tailwind 中没有的 */
-.shadow-card {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import * as api from '@/api/index';
+
+// 状态管理
+const currentBalance = ref(0);
+
+const getCurrentBalance = async () => {
+  let res = await api.getUserInfo();
+  currentBalance.value = res.userinfo.balance;
 }
 
-.text-primary {
-  color: #165DFF;
+getCurrentBalance();
+
+// 获取提现记录
+const tableData = ref([]);
+const loading = ref(false);
+// 分页参数
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(tableData.value.length);
+
+const getWithdrawalRecord = async () => {
+  try {
+    loading.value = true;
+    let res = await api.userWithdrawalList({
+      page: currentPage.value,
+      pageSize: pageSize.value
+    });
+    let data = res.list;
+    tableData.value = data.data;
+    // total,per_page,current_page
+    total.value = data.total;
+    pageSize.value = data.per_page;
+    currentPage.value = data.current_page;
+  } catch (error) {
+    console.error('获取提现记录失败:', error);
+    ElMessage.error('获取提现记录失败');
+  } finally {
+    loading.value = false;
+  }
+}
+
+getWithdrawalRecord();
+
+// 筛选条件
+const status = ref('');
+const withdrawalId = ref('');
+
+// 计算属性：当前页数据
+const filteredData = computed(() => {
+  let filtered = tableData.value;
+  
+  // 状态筛选
+  if (status.value !== '') {
+    filtered = filtered.filter(item => String(item.withdrawal_status) === String(status.value));
+  }
+  
+  // 提现单号筛选
+  if (withdrawalId.value.trim() !== '') {
+    filtered = filtered.filter(item => 
+      item.withdrawal_no && item.withdrawal_no.toLowerCase().includes(withdrawalId.value.toLowerCase())
+    );
+  }
+  
+  return filtered;
+});
+
+// 方法
+const resetFilters = () => {
+  status.value = '';
+  withdrawalId.value = '';
+};
+
+const deleteWithdrawal = (row) => {
+  // 获取状态文本
+  const statusText = row.withdrawal_status === 0 ? '待处理' : '失败';
+  
+  // 删除提现记录
+  ElMessageBox.confirm(
+    `确定要删除${statusText}状态的提现记录吗？<br/>
+    <strong>提现单号：</strong>${row.withdrawal_no}<br/>
+    <strong>提现金额：</strong>¥${row.amount}<br/>
+    <strong>申请时间：</strong>${row.withdrawal_time}<br/>
+    <strong>当前状态：</strong>${statusText}<br/><br/>
+    删除后无法恢复，请谨慎操作！`,
+    '确认删除',
+    {
+      confirmButtonText: '确定删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      dangerouslyUseHTMLString: true
+    }
+  ).then(async () => {
+    try {
+      await api.deleteUserWithdrawal(row.id);
+      ElMessage({
+        type: 'success',
+        message: '删除成功'
+      });
+      // 刷新余额
+      getCurrentBalance();
+      // 重新获取数据
+      getWithdrawalRecord();
+    } catch (error) {
+      console.error('删除失败:', error);
+      ElMessage.error('删除失败');
+    }
+  }).catch(() => {
+    // 用户取消删除
+    ElMessage({
+      type: 'info',
+      message: '已取消删除'
+    });
+  });
+};
+
+const showWithdrawal = ref(false);
+const withdrawalAmount = ref('');
+
+const showWithdrawalDialog = () => {
+  showWithdrawal.value = true; 
+};
+
+const createWithdrawal = async () => {
+  if (!withdrawalAmount.value || Number(withdrawalAmount.value) <= 0) {
+    ElMessage.error('请输入有效的提现金额');
+    return;
+  }
+  if (Number(withdrawalAmount.value) > Number(currentBalance.value)) {
+    ElMessage.error('提现金额不得大于当前余额');
+    return;
+  }
+  try {
+    let res = await api.createUserWithdrawal({
+      amount: withdrawalAmount.value
+    });
+    if (res.status == 'success') {
+      ElMessage.success('申请成功');
+    } else {
+      ElMessage.error(res.message);
+    }
+     
+    showWithdrawal.value = false;
+    withdrawalAmount.value = '';
+    // 刷新余额和列表
+    getCurrentBalance();
+    getWithdrawalRecord();
+  } catch (err) {
+    console.log(err);
+    ElMessage.error('提现失败');
+  }
+};
+
+const handleSizeChange = (val) => {
+  pageSize.value = val;
+  getWithdrawalRecord();
+};
+
+const handleCurrentChange = (val) => {
+  currentPage.value = val;
+  getWithdrawalRecord();
+};
+
+function handleQuery() {
+  // 如果有分页，重置到第一页
+  currentPage.value = 1;
+  // filteredData 会自动响应
+}
+
+// 监听搜索输入变化
+watch(withdrawalId, (newVal) => {
+  // 当搜索内容变化时，可以触发查询
+  console.log('搜索内容变化:', newVal);
+});
+
+// 页面加载时的初始化
+onMounted(() => {
+  // 可以添加页面初始化逻辑
+});
+</script>
+
+<style scoped>
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.filter-area {
+  margin-bottom: 20px;
+}
+
+.balance-info {
+  margin-bottom: 20px;
+}
+
+.balance-value {
+  padding: 16px 0;
+  font-size: 16px;
+}
+
+.stats-area .text {
+  color: #606266;
+  font-size: 14px;
+}
+
+.stats-area .value {
+  font-size: 24px;
+  font-weight: 600;
+  margin-top: 8px;
 }
 
 .text-success {
   color: #52c41a;
 }
 
-.hover-scale {
-  transition: transform 0.2s ease;
+.text-danger {
+  color: #ff4d4f;
 }
 
-.hover-scale:hover {
-  transform: scale(1.02);
+.text-warning {
+  color: #faad14;
 }
 
-.font-inter {
-  font-family: 'Inter', sans-serif;
+.text-primary {
+  color: #1890ff;
 }
-  </style>
+
+.text-info {
+  color: #13c2c2;
+}
+
+.font-weight-bold {
+  font-weight: 600;
+}
+
+/* 无数据状态样式 */
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.empty-image {
+  width: 200px;
+  height: 150px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.empty-text {
+  font-size: 16px;
+  color: #909399;
+  margin-bottom: 20px;
+}
+
+/* 支付说明样式 */
+.payment-notice {
+  color: #909399;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 8px 0;
+}
+
+/* 添加缺失的样式定义 */
+.grid-content {
+  border-radius: 4px;
+  padding: 16px;
+  background-color: #f5f7fa;
+}
+
+.bg-purple {
+  background-color: #f9fafc;
+}
+</style>

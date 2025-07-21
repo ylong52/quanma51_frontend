@@ -1,41 +1,41 @@
 <template>
-  <template v-if="rechargeDialogVisible==false"> 
-  <div class="container mx-auto px-4 py-8">
-   
-    <!-- 页面标题 -->
-    <PageHeader title="我的充值记录" />
-    
-    <!-- 余额信息 -->
-    <el-card class="mb-6">
-      <template #header>
-        <div class="flex justify-between items-center">
-          <span>当前余额222</span>
-          <el-button type="primary" size="medium" @click="showRechargeDialog">
-            <i class="fa fa-plus-circle"></i> 充值222
-          </el-button>
+  <template v-if="rechargeDialogVisible == false">
+    <div class="container mx-auto px-4 py-8">
+
+      <!-- 页面标题 -->
+      <PageHeader title="我的充值记录" />
+
+      <!-- 余额信息 -->
+      <el-card class="mb-6">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <span>当前余额 </span>
+            <el-button type="primary" size="medium" @click="showRechargeDialog">
+              <i class="fa fa-plus-circle"></i> 充值
+            </el-button>
+          </div>
+        </template>
+        <div class="p-4">
+          <span class="text-gray-600">当前可用余额：</span>
+          <span class="text-success font-bold text-xl">¥{{ currentBalance }}</span>
         </div>
-      </template>
-      <div class="p-4">
-        <span class="text-gray-600">当前可用余额：</span>
-        <span class="text-success font-bold text-xl">¥{{ currentBalance }}</span>
-      </div>
-    </el-card>
-    
-    <!-- 筛选区域 -->
-    <div class="mb-6">
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <el-select v-model="timeRange" placeholder="时间范围" clearable size="medium">
-            <el-option label="全部" value="all"></el-option>
-            <el-option label="今天" value="today"></el-option>
-            <el-option label="昨天" value="yesterday"></el-option>
-            <el-option label="近7天" value="7days"></el-option>
-            <el-option label="本月" value="month"></el-option>
-            <el-option label="上月" value="lastMonth"></el-option>
-            <el-option label="自定义" value="custom"></el-option>
-          </el-select>
-        </el-col>
-        <el-col :span="6">
+      </el-card>
+
+      <!-- 筛选区域 -->
+      <div class="mb-6">
+        <el-row :gutter="20">
+          <!-- <el-col :span="6">
+            <el-select v-model="timeRange" placeholder="时间范围" clearable size="medium">
+              <el-option label="全部" value="all"></el-option>
+              <el-option label="今天" value="today"></el-option>
+              <el-option label="昨天" value="yesterday"></el-option>
+              <el-option label="近7天" value="7days"></el-option>
+              <el-option label="本月" value="month"></el-option>
+              <el-option label="上月" value="lastMonth"></el-option>
+              <el-option label="自定义" value="custom"></el-option>
+            </el-select>
+          </el-col> -->
+          <!-- <el-col :span="6">
           <el-select v-model="payMethod" placeholder="充值方式" clearable size="medium">
             <el-option label="全部" value="all"></el-option>
             <el-option label="微信支付" value="wechat"></el-option>
@@ -43,174 +43,138 @@
             <el-option label="银行卡" value="bank"></el-option>
             <el-option label="Apple Pay" value="applePay"></el-option>
           </el-select>
-        </el-col>
-        <el-col :span="6">
-          <el-select v-model="status" placeholder="充值状态" clearable size="medium">
-            <el-option label="全部" value="all"></el-option>
-            <el-option label="成功" value="success"></el-option>
-            <el-option label="失败" value="fail"></el-option>
-            <el-option label="处理中" value="processing"></el-option>
-            <el-option label="已退款" value="refunded"></el-option>
-          </el-select>
-        </el-col>
-        <el-col :span="6">
-          <el-button type="primary" @click="filterData" size="medium">
-            <i class="fa fa-search"></i> 查询
-          </el-button>
-          <el-button @click="resetFilters" size="medium">
-            <i class="fa fa-refresh"></i> 重置
-          </el-button>
-        </el-col>
-      </el-row>
-    </div>
-    
-    <!-- 列表区域 -->
-    <div>
-      <!-- 无数据状态 -->
-      <div v-if="tableData.length === 0" class="text-center py-12">
-        <img src="https://picsum.photos/seed/nodata/200/150" alt="暂无数据" class="mx-auto mb-4 w-40 h-30 rounded">
-        <p class="text-gray-500 mb-4">暂无充值记录</p>
-        <el-button type="primary" @click="showRechargeDialog">
-          <i class="fa fa-plus-circle"></i> 前去充值
-        </el-button>
+        </el-col> -->
+
+          <el-col :span="6">
+            <el-select v-model="status" placeholder="充值状态" clearable size="medium">
+              <el-option label="全部" value=""></el-option>
+              <el-option label="待支付" value="0"></el-option>
+              <el-option label="支付成功" value="1"></el-option>
+              <el-option label="支付失败" value="2"></el-option>
+            </el-select>
+          </el-col>
+
+          <el-col :span="6">
+            <el-input v-model="rechargeId" placeholder="充值ID" clearable size="medium"></el-input>
+          </el-col>
+
+          <el-col :span="6">
+            <el-button type="primary" @click="handleQuery" size="medium">
+              <i class="fa fa-search"></i> 查询
+            </el-button>
+            <el-button @click="resetFilters" size="medium">
+              <i class="fa fa-refresh"></i> 重置
+            </el-button>
+          </el-col>
+        </el-row>
       </div>
 
-      <!-- 有数据时显示表格 -->
-<el-table
-        :data="currentData"
-    border
-    stripe
-    fit
-    highlight-current-row
-    size="medium"
-    :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
-  >
-    <el-table-column type="index" label="序号" width="80"></el-table-column>
-    <el-table-column prop="id" label="充值ID" width="120"></el-table-column>
-    <el-table-column prop="time" label="充值时间" width="180"></el-table-column>
-<el-table-column prop="amount" label="充值金额" width="120">
-        <template #default="{ row = {} }">
-          <span class="text-success font-weight-bold">{{ row.amount }}</span>
-        </template>
-      </el-table-column>
-    <el-table-column prop="method" label="支付方式" width="120"></el-table-column>
-    <el-table-column prop="arrival" label="实际到账" width="120">
-       
-    </el-table-column>
-    <el-table-column prop="status" label="充值状态" width="120">
-  
-    </el-table-column>
+      <!-- 列表区域 -->
+      <div>
+        <!-- 无数据状态 -->
+        <div v-if="tableData.length === 0" class="text-center py-12">
+          <img src="https://picsum.photos/seed/nodata/200/150" alt="暂无数据" class="mx-auto mb-4 w-40 h-30 rounded">
+          <p class="text-gray-500 mb-4">暂无充值记录</p>
+          <el-button type="primary" @click="showRechargeDialog">
+            <i class="fa fa-plus-circle"></i> 前去充值
+          </el-button>
+        </div>
+
+        <!-- 有数据时显示表格 -->
+        <el-table :data="filteredData" border stripe fit highlight-current-row size="medium"
+          :header-cell-style="{ background: '#f5f7fa', color: '#606266' }">
+          <el-table-column type="index" label="序号" width="80"></el-table-column>
+          <el-table-column prop="id" label="充值ID" width="120"></el-table-column>
+          <el-table-column prop="payment_time" label="充值时间" width="180"></el-table-column>
+          <el-table-column prop="amount" label="充值金额" width="120">
+            <template #default="{ row = {} }">
+              <span class="text-success font-weight-bold">{{ row.amount }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="payment_method" label="支付方式" width="120">
+            <template #default="{ row = {} }">
+              <span v-if="row.payment_method == 1" class="text-success">微信</span>
+              <span v-else-if="row.payment_method == 2" class="text-primary">支付宝</span>
+              <span v-else-if="row.payment_method == 3" class="text-info">银行卡</span>
+              <span v-else-if="row.payment_method == 4" class="text-warning">Apple Pay</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="status" label="充值状态" width="120">
+            <template #default="{ row = {} }">
+              <span v-if="row.status === 0" class="text-warning">待支付</span>
+              <span v-else-if="row.status === 1" class="text-success">支付成功</span>
+              <span v-else-if="row.status === 2" class="text-danger">支付失败</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="created_at" label="创建时间" width="180"></el-table-column>
+          <!--  
     <el-table-column label="操作" width="180" fixed="right">
        
-    </el-table-column>
-  </el-table>
+    </el-table-column> -->
+        </el-table>
 
 
+      </div>
+
+      <!-- 分页区域 -->
+      <div class="mt-8 text-center">
+        <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage"
+          :page-sizes="[10, 20, 50, 100]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper"
+          :total="total"></el-pagination>
+      </div>
+
     </div>
-    
-    <!-- 分页区域 -->
-    <div class="mt-8 text-center">
-      <el-pagination
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        :current-page="currentPage"
-        :page-sizes="[10, 20, 50, 100]"
-        :page-size="pageSize"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="total"
-      ></el-pagination>
-    </div>
- 
-  </div>
   </template>
-<!-- 充值弹窗组件 -->
-<alipaypayment v-if="rechargeDialogVisible" @close="rechargeDialogVisible = false" />
+  <!-- 充值弹窗组件 -->
+  <alipaypayment v-if="rechargeDialogVisible" @close="rechargeDialogVisible = false" />
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import alipaypayment from '@/components/account/alipaypayment.vue';
+import * as api from '@/api/index';
+//
+const rechargeId = ref('');
 // 状态管理
-const currentBalance = ref(125.50);
+const currentBalance = ref(0);
 
-const tableData = ref([
-  {
-    id: 2001,
-    time: '2025-07-12 08:45',
-    amount: '¥100.00',
-    method: '微信支付',
-    arrival: '¥100.00',
-    status: '成功',
-    orderNo: 'PAY20250712001',
-    channel: '微信支付',
-    remark: '用户正常充值'
-  },
-  {
-    id: 2002,
-    time: '2025-07-10 15:30',
-    amount: '¥200.00',
-    method: '支付宝',
-    arrival: '¥200.00',
-    status: '成功',
-    orderNo: 'PAY20250710002',
-    channel: '支付宝',
-    remark: '用户正常充值'
-  },
-  {
-    id: 2003,
-    time: '2025-07-08 11:20',
-    amount: '¥500.00',
-    method: '银行卡',
-    arrival: '¥0.00',
-    status: '失败',
-    orderNo: 'PAY20250708003',
-    channel: '招商银行',
-    remark: '银行卡余额不足，支付失败'
-  },
-  {
-    id: 2004,
-    time: '2025-07-05 19:10',
-    amount: '¥300.00',
-    method: '微信支付',
-    arrival: '¥300.00',
-    status: '成功',
-    orderNo: 'PAY20250705004',
-    channel: '微信支付',
-    remark: '用户正常充值'
-  },
-  {
-    id: 2005,
-    time: '2025-07-03 14:25',
-    amount: '¥1000.00',
-    method: 'Apple Pay',
-    arrival: '¥1000.00',
-    status: '处理中',
-    orderNo: 'PAY20250703005',
-    channel: '工商银行',
-    remark: '支付已受理，正在处理中'
-  },
-  {
-    id: 2006,
-    time: '2025-07-02 10:15',
-    amount: '¥50.00',
-    method: '支付宝',
-    arrival: '¥50.00',
-    status: '已退款',
-    orderNo: 'PAY20250702006',
-    channel: '支付宝',
-    remark: '用户申请退款，已处理'
-  }
-]);
+const getCurrentBalance = async () => {
+  let res = await api.getUserInfo();
 
-// 筛选条件
-const timeRange = ref('all');
-const payMethod = ref('all');
-const status = ref('all');
+  currentBalance.value = res.userinfo.balance;
+}
 
+getCurrentBalance();
+
+// 获取充值记录
+const tableData = ref([]);
 // 分页参数
 const currentPage = ref(1);
 const pageSize = ref(10);
 const total = ref(tableData.value.length);
+
+const getRechargeRecord = async () => {
+  let res = await api.rechargeRecord({
+    page: currentPage.value,
+    pageSize: pageSize.value
+  });
+  let data = res.list;
+  tableData.value = data.data;
+  // total,per_page,current_page
+  total.value = data.total;
+  pageSize.value = data.per_page;
+  currentPage.value = data.current_page;
+
+}
+getRechargeRecord();
+
+// 筛选条件
+const timeRange = ref('all');
+const payMethod = ref('all');
+const status = ref('');
+
+
 
 // 对话框状态
 const rechargeDialogVisible = ref(false);
@@ -238,33 +202,11 @@ const rechargeRules = ref({
 const rechargeFormRef = ref(null);
 
 // 计算属性：当前页数据
-const currentData = computed(() => {
-  // 模拟筛选和分页
-  let filteredData = tableData.value;
-  
-  // 时间范围筛选
-  if (timeRange.value !== 'all') {
-    // 实际项目中这里会根据不同时间范围筛选
-    filteredData = filteredData;
-  }
-  
-  // 支付方式筛选
-  if (payMethod.value !== 'all') {
-    filteredData = filteredData.filter(item => item.method === payMethod.value);
-  }
-  
-  // 状态筛选
-  if (status.value !== 'all') {
-    filteredData = filteredData.filter(item => item.status === status.value);
-  }
-  
-  // 更新总数
-  total.value = filteredData.length;
-  
-  // 分页
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredData.slice(start, end);
+const filteredData = computed(() => {
+  // status.value 为空字符串时不过滤
+  if (status.value === '') return tableData.value;
+  // 其它情况，过滤
+  return tableData.value.filter(item => String(item.status) === String(status.value));
 });
 
 // 方法
@@ -276,7 +218,8 @@ const filterData = () => {
 const resetFilters = () => {
   timeRange.value = 'all';
   payMethod.value = 'all';
-  status.value = 'all';
+  status.value = ''; // 重置充值状态
+  rechargeId.value = ''; // 重置充值ID
 };
 
 const viewDetail = (row) => {
@@ -322,8 +265,14 @@ const showRechargeDialog = () => {
   };
 };
 
+function handleQuery() {
+  // 如果有分页，重置到第一页
+  currentPage.value = 1;
+  // filteredData 会自动响应
+}
 
- 
+
+
 
 // 页面加载时的初始化
 onMounted(() => {

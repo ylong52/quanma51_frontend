@@ -30,7 +30,7 @@ export default [
       {
         path: 'order', // /account/order
         name: 'accountOrder',
-        component: () => import('@/components/account/goods.vue')
+        component: () => import('@/components/account/order.vue')
       },
       {
         path: 'recharge', // /account/recharge
