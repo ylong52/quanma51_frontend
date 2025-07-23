@@ -1,19 +1,20 @@
 <template>
   <Teleport to="body">
-    <div v-if="showAgreement" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div v-if="showAgreement" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <!-- 遮罩层 -->
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click.self="showAgreement = false"></div>
-      <!-- 弹窗内容 -->
-      <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto overflow-hidden animate-fadeInUp">
+      <!-- 弹窗内容 - 移除max-w-md响应式限制，采用固定手机端宽度 -->
+      <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-[90vw] mx-auto overflow-hidden animate-fadeInUp">
         <!-- 关闭按钮 -->
-        <button class="absolute top-3 right-3 text-gray-400 hover:text-primary text-xl z-10" @click="showAgreement = false">
+        <button class="absolute top-3 right-3 text-gray-400 hover:text-primary text-xl z-10 w-8 h-8 flex items-center justify-center" @click="showAgreement = false">
           &times;
         </button>
         <div class="p-6">
           <div class="text-center mb-4">
             <h2 class="text-xl font-bold text-gray-800">用户服务协议</h2>
           </div>
-          <div class="max-h-[60vh] overflow-y-auto pr-2 mb-6">
+          <!-- 内容区域 - 使用vh单位确保在手机屏幕上有合适高度 -->
+          <div class="max-h-[60vh] overflow-y-auto pr-2 mb-6 text-sm leading-relaxed">
             <p class="mb-4">欢迎使用我们的服务！在使用我们的服务之前，请仔细阅读以下服务协议。</p>
             <h3 class="font-semibold mt-4 mb-2">一、服务条款的接受</h3>
             <p class="mb-2">1.1 当您注册成为我们的用户，或使用我们提供的服务时，即表示您已阅读、理解并同意接受本服务条款的所有内容。</p>
@@ -38,11 +39,12 @@
             <p>7.2 如双方就本服务条款发生争议，应首先通过友好协商解决；协商不成的，任何一方均有权向有管辖权的人民法院提起诉讼。</p>
             <p class="mt-4">请仔细阅读上述条款，如您同意，请点击"同意并继续"按钮。</p>
           </div>
-          <div class="flex justify-end space-x-4">
-            <button @click="handleDisagree" class="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-custom">
+          <!-- 按钮区域 - 增大触摸区域，优化间距 -->
+          <div class="flex justify-end space-x-4 pt-2">
+            <button @click="handleDisagree" class="px-5 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-custom w-28">
               不同意
             </button>
-            <button @click="handleAgree" class="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-custom shadow-md hover:shadow-lg">
+            <button @click="handleAgree" class="px-5 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-custom shadow-md hover:shadow-lg w-32">
               同意并继续
             </button>
           </div>
@@ -87,4 +89,20 @@ const handleDisagree = () => {
 .animate-fadeInUp {
   animation: fadeInUp 0.3s cubic-bezier(0.4,0,0.2,1);
 }
-</style>    
+
+/* 添加滚动条美化，提升手机端体验 */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ccc;
+}
+</style>

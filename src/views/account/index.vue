@@ -19,7 +19,6 @@ import { useRoute, useRouter } from 'vue-router';
 import SideMenu from '@/components/account/slider.vue';
 import Header from '@/components/account/header.vue';
 import AccountInfo from '@/components/account/accountinfo.vue';
-import Goods from '@/components/account/goods.vue';
 import recharge from '@/components/account/recharge.vue';
 import promotionFeatures from '@/components/account/promotionFeatures.vue';
 
@@ -67,7 +66,7 @@ const handleMenuChange = (menu) => {
 
 const rightComponent = computed(() => {
   if (activeMenu.value === 'personalInfo') return AccountInfo;
-  if (activeMenu.value === 'productList') return Goods;
+  if (activeMenu.value === 'productList') return require('@/components/account/order.vue').default;
   if (activeMenu.value === 'recharge') return recharge;
   if (activeMenu.value === 'userWithdrawal') return userWithdrawal;
   if (activeMenu.value === 'promotionFeatures') return promotionFeatures;

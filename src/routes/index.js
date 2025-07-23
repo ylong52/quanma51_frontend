@@ -7,7 +7,11 @@ export default [
     name: 'Home',
     component: () => import('@/views/index.vue')
   },
- 
+  {
+    path: '/regsiter',
+    name: 'regsiter',
+    component: () => import('@/views/Register.vue')
+  },
   {
     path: '/buyDetail',
     component: () => import('@/views/buyDetail.vue')
@@ -49,16 +53,16 @@ export default [
       } 
     ]
   },
- 
-  
   {
-    path: '/demo1',
-    name: 'Demo1',
-    component: () => import('@/views/Demo1.vue')
+    path: '/category',
+    name: 'category',
+    component: () => import('@/views/category.vue')
   },
   {
-    path: '/demo2',
-    name: 'Demo2',
-    component: () => import('@/views/Demo2.vue')
+    path: '/productlist',
+    name: 'productlist',
+    component: () => import('@/views/productlist.vue')
   }
+  
+ 
 ] 
