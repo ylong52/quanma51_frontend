@@ -79,13 +79,8 @@
     </div>
 
     <!-- 底部导航 -->
-    <div class="bottom-nav">
-      <ul>
-        <li v-for="item in bottomNavItems" :key="item.id">
-          <a href="javascript:;">{{ item.name }}</a>
-        </li>
-      </ul>
-    </div>
+    <Footer :active="2" />
+     
   </div>
 </template>
 
@@ -93,6 +88,7 @@
 import { ref, reactive, computed,onUnmounted, watch,onMounted } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
+import Footer from '@/components/page-footer.vue';
 import { faChevronDown, faSearch, faThLarge, faList } from '@fortawesome/free-solid-svg-icons';
 import * as api from "@/api";
 import { useRoute } from 'vue-router';

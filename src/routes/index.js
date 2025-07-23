@@ -12,10 +12,7 @@ export default [
     name: 'regsiter',
     component: () => import('@/views/Register.vue')
   },
-  {
-    path: '/buyDetail',
-    component: () => import('@/views/buyDetail.vue')
-  },
+  
   {
     path: '/payment',
     name: 'payment',
@@ -53,6 +50,7 @@ export default [
       } 
     ]
   },
+ 
   {
     path: '/category',
     name: 'category',
@@ -62,7 +60,45 @@ export default [
     path: '/productlist',
     name: 'productlist',
     component: () => import('@/views/productlist.vue')
+  },
+  {
+    path: '/goodsdetail',
+    name: 'goodsdetail',
+    component: () => import('@/views/goodsdetail.vue')
+  },
+  {
+    path: '/buyDetail',
+    component: () => import('@/views/buyDetail.vue')
+  },
+  {
+    path: '/personal/index',
+    name: 'personal',
+    component: () => import('@/views/personal/index.vue')
+  },
+  {
+    path: '/personal/order',
+    name: 'order',
+    component: () => import('@/views/personal/order.vue')
+  },
+  {
+    path: '/personal/recharge',
+    name: 'recharge',
+    component: () => import('@/views/personal/recharge.vue')
+  },
+  {
+    path: '/personal/userWithdrawal',
+    name: 'userWithdrawal',
+    component: () => import('@/views/personal/userWithdrawal.vue')
+  },
+  {
+    path: '/personal/rechargelist',
+    name: 'rechargelist',
+    component: () => import('@/views/personal/rechargelist.vue')
+  },
+  {
+    path: '/personal/promotion',
+    name: 'promotion',
+    component: () => import('@/views/personal/promotion.vue')
   }
   
- 
 ] 
