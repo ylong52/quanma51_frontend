@@ -17,7 +17,7 @@ export const updateUser = (id, data) => request.put(`/api/users/${id}`, data);
 export const getProductList = (params) => request.post('/api/product',  params  );
 export const getProductDetail = (id) => request.get(`/api/product/detail/${id}`);
 
-export const createOrder = (data) => request.post('/api/order/create', data);
+// export const createOrder = (data) => request.post('/api/order/create', data);
 // getOrderInfo
 export const getOrderInfo = (orderNumber) => request.get(`/api/order/orderinfo/${orderNumber}`);
 //payOrder

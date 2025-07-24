@@ -61,16 +61,19 @@
 
     <!-- 商品列表 -->
     <div class="goods-list" :class="{ 'grid-view': listViewStyle === 'grid', 'list-view': listViewStyle === 'list' }">
-      <div class="goods-item" v-if="goodsData.length > 0" v-for="goods in goodsData" :key="goods.id">
-        <img :src="goods.imgUrl" alt="{{ goods.name }}" class="goods-img" loading="lazy">
-        <div class="goods-info">
-          <div class="goods-title">{{ goods.name }}</div>
-          <div class="goods-sku">商品编号：{{ goods.id }}</div>
-          <div class="price">售价：{{ goods.money }}元</div>
-        
+      <template v-if="goodsData.length > 0">
+        <div class="goods-item" v-for="goods in goodsData" :key="goods.id">
+          <img :src="goods.imgUrl" alt="{{ goods.name }}" class="goods-img" loading="lazy">
+          <div class="goods-info">
+           
+            <div class="goods-title">{{ goods.name }}</div>
+            <div class="goods-sku">商品编号：{{ goods.id }}</div>
+            <div class="price">售价：{{ goods.salePrice }}元</div>
+          
+          </div>
+          <button class="buy-btn" @click="goGoodsDetail(goods.id)">立即购买</button>
         </div>
-        <button class="buy-btn">立即购买</button>
-      </div>
+      </template>
       <div class="goods-item" v-else>
         <div class="text-center text-gray-400 text-base">
           暂无商品
@@ -92,7 +95,9 @@ import Footer from '@/components/page-footer.vue';
 import { faChevronDown, faSearch, faThLarge, faList } from '@fortawesome/free-solid-svg-icons';
 import * as api from "@/api";
 import { useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 const route = useRoute();
+const router = useRouter();
 
 // 注册Font Awesome图标
 library.add(faChevronDown, faSearch, faThLarge, faList);
@@ -151,7 +156,10 @@ const getProductCategory = async () => {
     }
   }
 
- 
+  let category2_id = route.query.category2?(route.query.category2 - 0):0;
+  if(category2_id > 0){
+    getProductList(category2_id);
+  }
 
 };
 
@@ -243,6 +251,13 @@ const handleClickOutside = (event) => {
     isCategoryDropdownOpen.value = false;
   }
 };
+
+const goGoodsDetail = (goods_id) => {
+  router.push({
+    path: '/goodsdetail',
+    query: { id: goods_id }
+  });
+}
 
 // 监听点击事件
 document.addEventListener('click', handleClickOutside);

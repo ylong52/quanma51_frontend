@@ -1,5 +1,5 @@
 <template>
-  <div class="content-container">
+  <div class="content-container overflow-x-hidden">
     <!-- 为固定头部留出空间 -->
     <div class="header-spacer"></div>
 
@@ -43,7 +43,7 @@
 
 
     <!-- 餐饮代下区 -->
-    <div class="bg-white p-4 mt-3 shadow-sm rounded-xl mx-3 card-shadow section-highlight cursor-pointer"
+    <div class="bg-white p-4 mt-3 shadow-sm rounded-xl mx-2 card-shadow section-highlight cursor-pointer"
       data-section="food-service">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-bold text-lg editable-field" data-type="text" data-target="food-title"><i
@@ -53,7 +53,7 @@
       <div class="flex overflow-x-auto pb-2 space-x-3">
         <!-- 改进的卡片设计 -->
       
-        <div class="flex-shrink-0 w-24 text-center card-hover" 
+        <div class="flex-shrink-0 w-1/4 text-center card-hover"
           v-for="h in hotCategoryList" :key="h.id">
           <div class="bg-gray-100 rounded-xl overflow-hidden mb-1 shadow-sm">
             <img :src="h.img" :alt="h.name" class="w-full h-24 object-cover editable-field"
@@ -70,7 +70,7 @@
  
 
     <!-- 分类区 -->
-    <div class="bg-white p-4 mt-3 shadow-sm rounded-xl mx-3 card-shadow section-highlight cursor-pointer"   data-section="audio-membership" v-if="categoryList.length > 0" v-for="item in categoryList" :key="item.id">
+    <div class="bg-white p-4 mt-3 shadow-sm rounded-xl mx-2 card-shadow section-highlight cursor-pointer"   data-section="audio-membership" v-if="categoryList.length > 0" v-for="item in categoryList" :key="item.id">
       <div class="flex  items-center mb-4">
         <span><img :src="item.img" :alt="item.category" class="w-10 h-10 rounded-lg object-cover"></span>
         <h3 class="font-bold text-lg editable-field" data-type="text" data-target="audio-title">
@@ -82,10 +82,11 @@
       </div>
       <div class="space-y-3">
         <!-- 改进的列表卡片 -->
-        <div class="category-list grid grid-cols-3 gap-4">
+        <div class="category-list grid grid-cols-2 sm:grid-cols-3 gap-4">
 
 
           <div class="category-card" v-for="item2 in item.children" :key="item2.id">
+ 
             <div class="category-card flex items-center p-3 border border-gray-100 rounded-xl card-hover">
               <img :src="item2.img" :alt="item2.category"
                 class="w-14 h-14 rounded-lg object-cover editable-field" data-type="image" data-target="audio-img1">
@@ -95,7 +96,7 @@
                   data-target="audio-name1" title="">{{item2.category}}</h4>
                 <!-- <p class="text-xs text-gray-500 mt-1 editable-field" data-type="text" data-target="audio-desc1">30天无限畅听</p> -->
                 <button class="bg-primary/10 text-primary rounded-full px-3 py-1 text-xs font-medium editable-field"
-                  data-type="text" data-target="audio-button1">
+                  data-type="text" data-target="audio-button1" @click="goProductList(item2.parent_id,item2.id)">
                   立即购买
                 </button>
               </div>
@@ -120,6 +121,8 @@
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import * as api from '@/api/index'; 
+import { useRouter } from 'vue-router';
+const router = useRouter();
 const route = useRoute();
 const categoryList = ref([]);
 
@@ -137,6 +140,12 @@ const getHotCategoryList = async () => {
 getCategoryList();
 getHotCategoryList();
 
+const goProductList = (parent_id,id) => {
+  router.push({
+    path: '/productlist',
+    query: { category: parent_id, category2: id }
+  });
+};
 
 
 </script>

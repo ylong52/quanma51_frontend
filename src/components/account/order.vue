@@ -88,7 +88,7 @@
                 </div>
                 <div class="p-4 flex justify-between items-center">
                   <div class="text-lg font-medium">
-                    总计：<span class="text-primary">¥{{ order.should_amount }}</span>
+                    总计：<span class="text-primary">¥{{ order.real_amount }}</span>
                   </div>
                   <div class="flex space-x-2">
                     <!-- <el-button v-if="order.status === 0" type="primary" @click="payOrder(order)">

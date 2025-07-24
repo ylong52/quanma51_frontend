@@ -80,7 +80,7 @@ const userStore = useUserStore()
 const form = ref({
   username: '',
   password: '',
-  rememberMe: false
+  rememberMe: true
 })
 
 // 加载状态
@@ -99,7 +99,8 @@ const handleLogin = async () => {
         rememberMe: form.value.rememberMe,
         token: res.data.token,
         userId: res.data.user.id,
-        phone: res.data.user.phone
+        phone: res.data.user.phone,
+        balance:res.data.user.balance
       });
       emit('close');
     } else {

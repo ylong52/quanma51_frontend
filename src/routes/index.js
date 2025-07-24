@@ -72,7 +72,7 @@ export default [
   },
   {
     path: '/personal/index',
-    name: 'personal',
+    name: 'personal-index',
     component: () => import('@/views/personal/index.vue')
   },
   {

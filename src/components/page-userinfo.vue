@@ -1,57 +1,72 @@
 <template>
   <div class="bg-white p-4 rounded-xl shadow-sm relative flex items-center">
     <!-- 头像和用户信息 -->
-    <img :src="userAvatar" alt="用户头像" class="user-avatar cursor-pointer" @click="handleAvatarClick" />
+    <div class="user-avatar cursor-pointer flex items-center justify-center bg-gray-100" @click="handleUserAction">
+      <font-awesome-icon :icon="['fas', 'user-circle']" class="text-4xl text-gray-400" />
+    </div>
     <div class="ml-3 flex-1 min-w-0">
-      <div class="font-medium text-neutral-dark truncate">{{ userName }}</div>
-      <div class="text-xs text-blue-500 cursor-pointer mt-0.5" @click="handleAvatarClick">{{ userStatus }}</div>
+      <template v-if="userInfo.isLoggedIn">
+        <div class="font-medium text-neutral-dark truncate" @click="gotoPersonalCenter">{{ userInfo.username }}</div>
+    
+        <div class="text-xs text-blue-500 cursor-pointer mt-0.5" @click="logout">退出登录</div>
+      </template>
+      <template v-else>
+        <div class="font-medium text-neutral-dark truncate">请先登录</div>
+        <div class="text-xs text-blue-500 cursor-pointer mt-0.5" @click="showLoginPopup = true">点击登录</div>
+      </template>
     </div>
     <!-- 余额按钮 -->
     <div class="absolute top-4 right-4">
-      <button class="balance-btn">余额: ¥{{ balance }}</button>
+      <button class="balance-btn" @click="gotoPersonalCenter">余额: {{ userInfo.balance || '0.00' }}</button>
     </div>
   </div>
-  <!-- 快捷操作区 -->
-  <div class="grid grid-cols-4 gap-0 mt-3 bg-white rounded-xl p-2">
-    <div class="text-center">
-      <div class="quick-icon"><i class="fa fa-credit-card text-primary"></i></div>
-      <div class="quick-label">充值</div>
-    </div>
-    <div class="text-center">
-      <div class="quick-icon"><i class="fa fa-exchange text-primary"></i></div>
-      <div class="quick-label">提现</div>
-    </div>
-    <div class="text-center">
-      <div class="quick-icon"><i class="fa fa-history text-primary"></i></div>
-      <div class="quick-label">订单</div>
-    </div>
-    <div class="text-center">
-      <div class="quick-icon"><i class="fa fa-gift text-primary"></i></div>
-      <div class="quick-label">优惠券</div>
-    </div>
-  </div>
+  <login :show="showLoginPopup" @close="showLoginPopup=false" />
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import Login from '@/views/login.vue'
+import { useRouter } from 'vue-router'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { faUserCircle } from '@fortawesome/free-solid-svg-icons'
+import { useToast } from 'vue-toast-notification';
+library.add(faUserCircle)
+import { useUserStore } from '../store/user'
+const userStore = useUserStore();
+const toast = useToast();
+const router = useRouter();
 
-const isLoggedIn = ref(false)
-const userAvatar = ref('https://picsum.photos/seed/anonymous/100/100')
-const userName = ref('未登录用户')
-const userStatus = ref('点击头像登录')
-const balance = ref('0.00')
+const userInfo = computed(() => {
+  // 兼容 userStore.userInfo 可能是ref/computed
+  const info = userStore.userInfo && userStore.userInfo.value ? userStore.userInfo.value : userStore.userInfo
+  return info && typeof info === 'object' && 'isLoggedIn' in info
+    ? info
+    : { username: '未登录用户', balance: '0.00', isLoggedIn: false }
+})
+const showLoginPopup = ref(false);
 
-function handleAvatarClick() {
-  if (!isLoggedIn.value) {
-    // 模拟登录
-    userAvatar.value = 'https://picsum.photos/seed/user1/100/100'
-    userName.value = '测试用户'
-    userStatus.value = '会员有效期至: 2025-12-31'
-    balance.value = '100.00'
-    isLoggedIn.value = true
+// 处理头像点击
+function handleUserAction() {
+  if (!userInfo.value.isLoggedIn) {
+    showLoginPopup.value = true;
   } else {
-    // 已登录状态点击头像可以跳转到个人中心
-    alert('跳转到个人中心')
+    gotoPersonalCenter();
+  }
+}
+
+// 退出登录
+function logout() {
+  userStore.logout();
+  toast.success('退出成功');
+}
+
+// 前往个人中心
+const gotoPersonalCenter = () => {
+  if (userInfo.value.isLoggedIn) {
+    router.push('/personal/index');
+  } else {
+    showLoginPopup.value = true;
   }
 }
 </script>

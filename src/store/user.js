@@ -1,88 +1,55 @@
 import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
 
-export const useUserStore = defineStore('user', {
-  state: () => {
-    // 从localStorage读取保存的用户信息
-    const savedUser = localStorage.getItem('userInfo');
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser);
-        return {
-          isLoggedIn: parsed.isLoggedIn,
-          username: parsed.username,
-          rememberMe: parsed.rememberMe,
-          token: parsed.token,
-          userId: parsed.userId,
-          phone: parsed.phone
-        };
-      } catch (e) {
-        localStorage.removeItem('userInfo');
-      }
-    }
-    
-    return {
-      isLoggedIn: false,
-      username: '',
-      rememberMe: false,
-      token: '',
-      userId: '',
-      phone: ''
-    };
-  },
-  
-  actions: {
-    login(userInfo) {
-      this.isLoggedIn = true;
-      this.username = userInfo.username;
-      this.rememberMe = userInfo.rememberMe;
-      this.token = userInfo.token;
-      this.userId = userInfo.userId;
-      this.phone = userInfo.phone;
+export const useUserStore = defineStore('user', () => {
+  const username = ref('')
+  const balance = ref('0.00')
+  const isLoggedIn = ref(false)
 
-      // 如果勾选了记住我，保存到localStorage
-      if (userInfo.rememberMe) {
-        localStorage.setItem('userInfo', JSON.stringify({
-          isLoggedIn: true,
-          username: userInfo.username,
-          rememberMe: true,
-          token: userInfo.token,
-          userId: userInfo.userId,
-          phone: userInfo.phone
-        }));
-        sessionStorage.removeItem('userInfo');
-      } else { 
-        localStorage.removeItem('userInfo');      
-        //临时存储
-        sessionStorage.setItem('userInfo', JSON.stringify({
-          isLoggedIn: true,
-          username: userInfo.username,
-          rememberMe: true,
-          token: userInfo.token,
-          userId: userInfo.userId,
-          phone: userInfo.phone
-        }));
-      }
-    },
-    
-    logout() {
-      this.isLoggedIn = false;
-      this.username = '';
-      this.rememberMe = false;
-      this.token = '';
-      this.userId = '';
-      this.phone = '';
-      // 登出时清除localStorage
-      localStorage.removeItem('userInfo');
-      sessionStorage.removeItem('userInfo');
+  // 初始化时从localStorage恢复
+  const saved = localStorage.getItem('userInfo')
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      username.value = parsed.username || ''
+      balance.value = parsed.balance || '0.00'
+      isLoggedIn.value = !!parsed.isLoggedIn
+    } catch (e) {
+      // ignore
     }
-  },
-  
-  getters: {
-    getUserInfo: (state) => ({
-      isLoggedIn: state.isLoggedIn,
-      username: state.username,
-      userId: state.userId,
-      phone: state.phone
-    })
+  }
+
+  // getter
+  const userInfo = computed(() => ({
+    username: username.value,
+    balance: balance.value,
+    isLoggedIn: isLoggedIn.value
+  }))
+
+  function login(info) {
+    username.value = info.username
+    balance.value = info.balance
+    isLoggedIn.value = true
+    // 持久化
+    localStorage.setItem('userInfo', JSON.stringify({
+      username: username.value,
+      balance: balance.value,
+      isLoggedIn: true
+    }))
+  }
+  function logout() {
+    username.value = ''
+    balance.value = '0.00'
+    isLoggedIn.value = false
+    localStorage.removeItem('userInfo')
+  }
+
+  return {
+    username,
+    balance,
+    isLoggedIn,
+    userInfo, // 作为getter暴露
+    login,
+    logout
   }
 })

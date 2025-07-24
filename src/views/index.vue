@@ -1,11 +1,12 @@
 <template>
-  <div >
-    <!-- 顶部导航 -->
-    <Header />
-    <UserInfo />
-    <Content />
-    <Footer />
-    
+  <div class="min-h-screen bg-gray-100 flex flex-col items-center">
+    <div class="w-full max-w-md mx-auto flex-1">
+      <!-- 顶部导航 -->
+      <Header />
+      <UserInfo />
+       <Content />  
+      <Footer /> 
+    </div>
   </div>
 </template>
 
