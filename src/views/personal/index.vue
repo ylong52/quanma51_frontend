@@ -26,7 +26,7 @@
           <font-awesome-icon :icon="'wallet'" class="text-orange-500 text-2xl mb-1" />
           <div class="font-bold text-lg text-gray-800">{{ userInfo.balance || '0.00' }}</div>
           <div class="text-xs text-gray-500 mt-1">账户余额(元)</div>
-        </div>
+    </div>
       </div>
       <!-- 我的订单 -->
       <div
@@ -126,6 +126,7 @@ import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import { useToast } from "vue-toast-notification";
 library.add(faUserCircle);
 import { useUserStore } from "../../store/user";
+import { getUserBalance } from "@/api";
 const userStore = useUserStore();
 console.log(userStore.userInfo);
 const toast = useToast();
@@ -140,6 +141,14 @@ const userInfo = computed(() => {
     ? info
     : { username: "未登录用户", balance: "0.00", isLoggedIn: false };
 });
+
+//获取用户余额
+const userBalance = async () => {
+  const res = await getUserBalance()
+  userStore.setBalance(res.balance)
+  // userInfo.balance 会自动响应式更新
+}
+userBalance();
 
 const showLoginPopup = ref(false);
 if (userInfo.value.isLoggedIn == false) {

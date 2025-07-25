@@ -13,7 +13,7 @@
               class="flex-1 bg-transparent border-0 outline-none text-sm px-1" />
           </div>
           <router-link to="/personal/index" class="ml-2 text-gray-400 text-lg">
-            <font-awesome-icon icon="user" />
+            <font-awesome-icon icon="user-circle" />
           </router-link>
         </div>
         <!-- tabs -->
@@ -98,9 +98,9 @@ import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import { ElConfigProvider } from 'element-plus'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faHouse, faUser, faList, faClock, faTruck, faBoxOpen, faCheckCircle, faBan, faCreditCard, faTimesCircle, faCheck, faFileAlt, faStar } from '@fortawesome/free-solid-svg-icons'
+import { faHouse, faUser, faList, faClock, faTruck, faBoxOpen, faCheckCircle, faBan, faCreditCard, faTimesCircle, faCheck, faFileAlt, faStar, faUserCircle, faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { orderList } from '@/api'
-library.add(faHouse, faUser, faList, faClock, faTruck, faBoxOpen, faCheckCircle, faBan, faCreditCard, faTimesCircle, faCheck, faFileAlt, faStar)
+library.add(faHouse, faUser, faList, faClock, faTruck, faBoxOpen, faCheckCircle, faBan, faCreditCard, faTimesCircle, faCheck, faFileAlt, faStar, faUserCircle, faArrowLeft)
 
 // 注册全局组件（如果未全局注册）
 // app.component('font-awesome-icon', FontAwesomeIcon)
@@ -124,12 +124,12 @@ const filteredOrdersTotal = computed(() => {
   }
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase()
-    console.log('搜索过滤(总数):', keyword, '原始数据量:', filtered.length)
+    // console.log('搜索过滤(总数):', keyword, '原始数据量:', filtered.length)
     filtered = filtered.filter(order =>
       (order.order_number && order.order_number.includes(keyword)) ||
       (order.product_name && order.product_name.toLowerCase().includes(keyword))
     )
-    console.log('搜索后数据量(总数):', filtered.length)
+    // console.log('搜索后数据量(总数):', filtered.length)
   }
   if (timeFilter.value !== 'all') {
     if (timeFilter.value === 'month') {
@@ -243,6 +243,14 @@ function confirmReceipt(order) {
     })
   })
 }
+
+const getUserBalance = async () => {
+  const res = await getUserBalance()
+  console.log("res==", res)
+}
+
+
+
 function viewOrderDetail(order) {
   ElMessage.info(`查看订单 ${order.order_number} 详情`)
 }
