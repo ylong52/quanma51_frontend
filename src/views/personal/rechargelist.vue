@@ -10,8 +10,19 @@
           </router-link>
           <div class="flex-1 text-center text-lg font-bold text-gray-800">充值管理</div>
         </div>
+ 
+        <!-- 提示信息 -->
+      <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-md mb-4 mt-12">
+        <div class="flex items-center">
+          <font-awesome-icon :icon="'exclamation-circle'" class="text-yellow-500 mr-2" />
+          <div class="text-sm text-gray-700">
+            为便于规范化管理，优化服务流程，充值环节将附加手续费5%。
+          </div>
+        </div>
+      </div>
+
         <!-- 充值功能区（可折叠） -->
-        <div class="bg-white rounded-xl shadow mb-4 mt-12">
+        <div class="bg-white rounded-xl shadow mb-4 mt-0">
           <div class="flex items-center px-4 py-3 border-b border-gray-100 cursor-pointer select-none"
             @click="showForm = !showForm">
             <font-awesome-icon :icon="'money-bill-wave'" class="text-orange-500 mr-2" />
@@ -26,7 +37,7 @@
                 <font-awesome-icon :icon="'yen-sign'" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input type="number"
                   class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-orange-400 text-base"
-                  placeholder="请输入充值金额"  v-model="rechargeAmount"/>
+                  placeholder="请输入充值金额"  v-model="rechargeAmount" @input="calculateTotal"/>
               </div>
             </div>
             <div class="mb-4">
@@ -36,6 +47,28 @@
                 <option value="wechat">微信支付</option>
                
               </select>
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm mb-1">手续费</label>
+              <div class="relative">
+                <font-awesome-icon :icon="'yen-sign'" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded bg-gray-100 text-gray-500 focus:outline-none focus:border-orange-400 text-base"
+                  placeholder="手续费"
+                  value="5%"
+                  readonly
+                  disabled
+                />
+              </div>
+            </div>
+            <!-- 合计 -->
+            <div class="mb-4">
+              <label class="block text-sm mb-1">合计</label>
+              <div class="relative">
+                <font-awesome-icon :icon="'yen-sign'" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input type="text" class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded bg-gray-100 text-gray-500 focus:outline-none focus:border-orange-400 text-base" placeholder="合计" :value="totalAmount" readonly disabled />
+              </div>
             </div>
             <button
               class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded mt-2 flex items-center justify-center" @click="handleRecharge">
@@ -135,6 +168,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { faUser, faMoneyBillWave, faChevronDown, faChevronUp, faYenSign, faPlusCircle, faHistory, faSearch, faSync } from '@fortawesome/free-solid-svg-icons';
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs';
 import { ElConfigProvider } from 'element-plus';
+import { ElMessage } from 'element-plus'; // Added ElMessage import
 library.add(faUser, faMoneyBillWave, faChevronDown, faChevronUp, faYenSign, faPlusCircle, faHistory, faSearch, faSync);
 import * as api from "@/api";
 
@@ -281,19 +315,48 @@ const rechargeRecord = async () => {
 }
 
 const rechargeMethod = ref('alipay');
-const rechargeAmount = ref(100)
+const rechargeAmount = ref(100);
+const totalAmount = ref(calculateTotalFromAmount(100)); // Initialize with default value
+
+// 计算合计金额（含手续费）
+function calculateTotalFromAmount(amount) {
+  if (!amount || isNaN(amount) || amount <= 0) {
+    return '0';
+  }
+  // 计算5%的手续费
+  const fee = parseFloat(amount) * 0.05;
+  const total = parseFloat(amount) + fee;
+  return total.toFixed(2);
+}
+
+// 当充值金额变化时更新合计
+function calculateTotal() {
+  totalAmount.value = calculateTotalFromAmount(rechargeAmount.value);
+}
+
 const handleRecharge = async () => {
-  api.rechargeCreatepay({
-    amount: rechargeAmount.value,
-    way_type: rechargeMethod.value
-  }).then(res => {
+  // 验证充值金额
+  if (!rechargeAmount.value || rechargeAmount.value <= 0) {
+    ElMessage.error('请输入有效的充值金额');
+    return;
+  }
+
+  try {
+    const res = await api.rechargeCreatepay({
+      amount: rechargeAmount.value,
+      way_type: rechargeMethod.value,
+      total_amount: totalAmount.value // 添加含手续费的总金额
+    });
+    
     if (res.status == 'success' && res.payinfo.pay_info) {
-      
       window.location.href = res.payinfo.pay_info;
+    } else {
+      ElMessage.error(res.message || '创建充值订单失败');
     }
-    debugger;
-    console.log(res);
-  })
+  } catch (error) {
+    console.error('充值请求失败:', error);
+    ElMessage.error('充值请求失败，请稍后再试');
+  }
 }
 
 onMounted(() => {

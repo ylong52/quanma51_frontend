@@ -17,6 +17,25 @@
         <font-awesome-icon :icon="'th-large'" class="text-2xl mb-1" />
         <span class="text-xs mt-1 text-bold">分类</span>
       </div>
+ 
+      <div
+        @click="handleNavClick('/personal/userWithdrawal', 3)"
+        class="flex flex-col items-center"
+        :class="active === 3 ? 'text-primary font-bold' : 'text-gray-500'"
+      >
+        <span class="text-base font-bold text-red-500">余额</span>
+        <span class="text-xs mt-1">互转</span>
+      </div>
+
+      <div
+        @click="handleNavClick('/personal/index', 3)"
+        class="flex flex-col items-center"
+        :class="active === 3 ? 'text-primary font-bold' : 'text-gray-500'"
+      >
+        <font-awesome-icon :icon="'headset'" class="text-2xl mb-1" />
+        <span class="text-xs mt-1 text-bold">客服</span>
+      </div>
+
       <div
         @click="handleNavClick('/personal/index', 3)"
         class="flex flex-col items-center"
@@ -33,10 +52,10 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faHome, faThLarge, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faThLarge, faUser,faHeadset } from '@fortawesome/free-solid-svg-icons';
 import { useRoute, useRouter } from 'vue-router';
 
-library.add(faHome, faThLarge, faUser);
+library.add(faHome, faThLarge, faUser,faHeadset);
 
 const props = defineProps({
   active: {

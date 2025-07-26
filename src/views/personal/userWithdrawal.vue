@@ -7,7 +7,21 @@
           <font-awesome-icon :icon="'user'" />
         </router-link>
         <div class="flex-1 text-center text-lg font-bold text-gray-800">提现管理</div>
+        <router-link to="/personal/rechargelist" class="text-gray-500 text-lg mr-2">
+          充值
+        </router-link>
       </div>
+      
+      <!-- 提示信息 -->
+      <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-md mb-4 mt-12">
+        <div class="flex items-center">
+          <font-awesome-icon :icon="'exclamation-circle'" class="text-yellow-500 mr-2" />
+          <div class="text-sm text-gray-700">
+            为保障资金安全，提现将在1-3个工作日内处理，请耐心等待。
+          </div>
+        </div>
+      </div>
+      
       <!-- 提现申请卡片 -->
       <div class="bg-white rounded-xl shadow mb-4 mt-12">
         <div class="flex items-center px-4 py-3 border-b border-gray-100 cursor-pointer select-none" @click="showForm = !showForm">
