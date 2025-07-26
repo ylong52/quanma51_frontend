@@ -9,16 +9,16 @@ export const useUserStore = defineStore('user', () => {
   // 初始化时从localStorage恢复
   const saved = localStorage.getItem('userInfo')
   if (saved) {
-    try {
+      try {
       const parsed = JSON.parse(saved)
       username.value = parsed.username || ''
       balance.value = parsed.balance || '0.00'
       isLoggedIn.value = !!parsed.isLoggedIn
-    } catch (e) {
+      } catch (e) {
       // ignore
+      }
     }
-  }
-
+    
   // getter
   const userInfo = computed(() => ({
     username: username.value,
@@ -31,7 +31,7 @@ export const useUserStore = defineStore('user', () => {
     balance.value = info.balance
     isLoggedIn.value = true
     // 持久化
-    localStorage.setItem('userInfo', JSON.stringify({
+        localStorage.setItem('userInfo', JSON.stringify({
       username: username.value,
       balance: balance.value,
       isLoggedIn: true
@@ -44,12 +44,23 @@ export const useUserStore = defineStore('user', () => {
     localStorage.removeItem('userInfo')
   }
 
+  function setBalance(newBalance) {
+    balance.value = newBalance
+    // 持久化
+    localStorage.setItem('userInfo', JSON.stringify({
+      username: username.value,
+      balance: balance.value,
+      isLoggedIn: isLoggedIn.value
+    }))
+  }
+
   return {
     username,
     balance,
     isLoggedIn,
     userInfo, // 作为getter暴露
     login,
-    logout
+    logout,
+    setBalance // 新增
   }
 })

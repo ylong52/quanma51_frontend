@@ -1,65 +1,60 @@
 <template>
-  <main class="flex-grow container mx-auto px-6 py-10">
+  <el-config-provider :locale="zhCn">
+  <main class="flex-grow container mx-auto px-1 py-1 order-container">
      
     <!-- 订单管理 -->
     <div class="max-w-4xl mx-auto">
-      <div class="apple-card mb-6">
-        <div class="p-6">
+      <div class="apple-card mb-1">
+        <div class="p-1">
           <!-- 订单状态选项卡 -->
-          <el-tabs v-model="activeTab" class="mb-6" @tab-change="handleTabChange">
+          <el-tabs v-model="activeTab" class="mb-1" @tab-change="handleTabChange" size="small">
             <!-- 订单状态,0未支付，1表示成功,2表示失败，3表示取消 -->
             <el-tab-pane label="全部" name="all"></el-tab-pane>
             <el-tab-pane label="成功" name="1"></el-tab-pane>
             <el-tab-pane label="未支付" name="0"></el-tab-pane>
-          
-        
             <el-tab-pane label="取消" name="3"></el-tab-pane>
           </el-tabs>
           <!-- 搜索和筛选 -->
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
-            <div class="flex items-center space-x-2 w-full md:w-auto">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-1 space-y-1 md:space-y-0">
+            <div class="flex items-center space-x-1 w-full md:w-auto">
               <el-input 
                 v-model="searchKeyword" 
                 placeholder="搜索订单号、商品名称" 
                 class="w-full md:w-80"
                 @keyup.enter="searchOrders"
+                size="small"
               >
                 <template #append>
-                  <el-button @click="searchOrders" icon="el-icon-search">搜索</el-button>
+                  <el-button @click="searchOrders" icon="el-icon-search" size="small">搜索</el-button>
                 </template>
               </el-input>
-            </div>
-            <div class="flex items-center space-x-3">
-              <el-select v-model="timeFilter" placeholder="时间范围" class="w-40" @change="handleTimeFilterChange">
-                <el-option label="全部时间" value="all"></el-option>
-                <el-option label="最近一周" value="week"></el-option>
-                <el-option label="最近一个月" value="month"></el-option>
-                <el-option label="最近三个月" value="quarter"></el-option>
-                <el-option label="最近半年" value="halfyear"></el-option>
-              </el-select>
-               
             </div>
           </div>
        
           <!-- 订单列表 -->
-          <div class="space-y-4">
+          <div class="space-y-1 order-list">
             <!-- 加载状态 -->
-            <div v-if="isLoading" class="flex justify-center items-center py-8">
+            <div v-if="isLoading" class="flex justify-center items-center py-1">
               <el-loading-spinner></el-loading-spinner>
-              <span class="ml-2">加载中...</span>
+              <span class="ml-2 text-xs">加载中...</span>
             </div>
             <!-- 空状态 -->
-            <div v-else-if="filteredOrders.length === 0" class="flex justify-center items-center py-8 text-gray-500">
+            <div v-else-if="filteredOrders.length === 0" class="flex justify-center items-center py-1 text-gray-500 text-xs">
               暂无订单数据
             </div>
             <!-- 订单列表 -->
-            <el-card v-else class="order-item " v-for="order in filteredOrders" :key="order.id">
-              <div class="el-card__header flex justify-between items-center border-b border-gray-100">
-                <div class="text-gray-600  mt-2 ">
-                  <span class="text-bold text-black ">订单号：{{ order.order_number }}</span>
-                  <span class="ml-4">{{ order.created_at }}</span>
+            <div v-else v-for="order in filteredOrders" :key="order.id" class="order-item">
+              <!-- 订单头部 -->
+              <div class="order-item-header">
+                <div class="text-gray-600 text-xs">
+                  <div>
+                    <span class="text-bold text-black">订单号：{{ order.order_number }}</span>
+                  </div>
+                  <div>
+                    <span class="text-xs text-gray-400">{{ order.created_at }}</span>
+                  </div>
                 </div>
-                <div class="font-medium" :class="{
+                <div class="font-medium text-xs" :class="{
                   'text-orange-500': order.status === 0,   // 未支付
                   'text-green-500': order.status === 1,    // 成功
                   'text-gray-500': order.status === 2,     // 失败
@@ -72,55 +67,42 @@
                   {{ order.status_text }}
                 </div>
               </div>
-              <div class="el-card__body p-0">
-                <div class="border-b border-gray-100">
-                  <div class="flex items-center p-4 hover:bg-gray-50 transition-custom">
-                    <img :src="order.product_img" alt="商品图片" class="w-20 h-20 object-cover rounded mr-4">
-                    <div class="flex-1">
-                      <div class="font-medium">{{ order.product_name }}</div>
-                      <div class="text-sm text-gray-500 mt-1">{{ order.productSpec }}</div>
-                    </div>
-                    <div class="text-right ml-4">
-                      <div class="font-medium">¥{{ order.item_price }}</div>
-                      <div class="text-sm text-gray-500">x{{ order.buynumber }}</div>
-                    </div>
-                  </div>
+              <!-- 订单内容 -->
+              <div class="order-item-content">
+                <img :src="order.product_img" alt="商品图片" class="product-image">
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-xs truncate">{{ order.product_name }}</div>
+                  <div class="text-xs text-gray-500 truncate">{{ order.productSpec }}</div>
                 </div>
-                <div class="p-4 flex justify-between items-center">
-                  <div class="text-lg font-medium">
-                    总计：<span class="text-primary">¥{{ order.real_amount }}</span>
-                  </div>
-                  <div class="flex space-x-2">
-                    <!-- <el-button v-if="order.status === 0" type="primary" @click="payOrder(order)">
-                      <font-awesome-icon icon="credit-card" class="mr-1" />立即付款
-                    </el-button>
-                    <el-button v-if="order.status === 0" link @click="cancelOrder(order)">
-                      <font-awesome-icon icon="times-circle" class="mr-1" />取消订单
-                    </el-button> -->
-                    <!-- <el-button v-if="order.status === 1" type="primary" @click="confirmReceipt(order)">
-                      <font-awesome-icon icon="check" class="mr-1" />确认收货
-                    </el-button>
-                    <el-button v-if="order.status === 1" link @click="viewOrderDetail(order)">
-                      <font-awesome-icon icon="file-alt" class="mr-1" />查看详情
-                    </el-button>
-                    <el-button v-if="order.status === 1" link @click="leaveReview(order)">
-                      <font-awesome-icon icon="star" class="mr-1" />评价商品
-                    </el-button> -->
-                  </div>
+                <div class="text-right ml-2 flex flex-col items-end">
+                  <div class="font-medium text-xs">¥{{ order.item_price }}</div>
+                  <div class="text-xs text-gray-500">x{{ order.buynumber }}</div>
                 </div>
               </div>
-            </el-card>
+              <!-- 订单底部 -->
+              <div class="order-item-footer">
+                <div class="text-xs font-medium">
+                  总计：<span class="text-primary">¥{{ order.real_amount }}</span>
+                </div>
+                <div class="flex space-x-1">
+                  <!-- 按钮区域 -->
+                </div>
+              </div>
+            </div>
           </div>
           <!-- 分页 -->
-          <div class="flex justify-center mt-8">
+          <div class="flex justify-center mt-2">
             <el-pagination
-              @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
               :current-page="currentPage"
-              :page-sizes="[5, 10, 20]"
               :page-size="pageSize"
-              layout="total, sizes, prev, pager, next, jumper"
-              :total="filteredOrdersTotal"
+              layout="prev, pager, next"
+              :total="total"
+              small
+              background
+              hide-on-single-page
+              :pager-count="5"
+              class="mini-pagination"
             >
             </el-pagination>
           </div>
@@ -128,12 +110,14 @@
       </div>
     </div>
   </main>
- 
+</el-config-provider>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import { ElConfigProvider } from 'element-plus'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faHouse, faUser, faList, faClock, faTruck, faBoxOpen, faCheckCircle, faBan, faCreditCard, faTimesCircle, faCheck, faFileAlt, faStar } from '@fortawesome/free-solid-svg-icons'
@@ -155,28 +139,32 @@ const orders = ref([])
 
 // 计算过滤后的订单总数（不分页）
 const filteredOrdersTotal = computed(() => {
-  let filtered = [...orders.value]
-  if (activeTab.value !== 'all') {
-    // 直接使用数字状态值进行过滤
-    filtered = filtered.filter(order => order.status === parseInt(activeTab.value))
-  }
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
-    console.log('搜索过滤(总数):', keyword, '原始数据量:', filtered.length)
-    filtered = filtered.filter(order =>
-      (order.order_number && order.order_number.includes(keyword)) ||
-      (order.product_name && order.product_name.toLowerCase().includes(keyword))
-    )
-    console.log('搜索后数据量(总数):', filtered.length)
-  }
-  if (timeFilter.value !== 'all') {
-    if (timeFilter.value === 'month') {
-      filtered = filtered.filter((_, index) => index < 3)
-    } else if (timeFilter.value === 'quarter') {
-      filtered = filtered.filter((_, index) => index < 5)
+  // 如果有搜索或过滤，使用前端过滤后的数量
+  if (searchKeyword.value || activeTab.value !== 'all' || timeFilter.value !== 'all') {
+    let filtered = [...orders.value]
+    if (activeTab.value !== 'all') {
+      // 直接使用数字状态值进行过滤
+      filtered = filtered.filter(order => order.status === parseInt(activeTab.value))
     }
+    if (searchKeyword.value) {
+      const keyword = searchKeyword.value.toLowerCase()
+      filtered = filtered.filter(order =>
+        (order.order_number && order.order_number.includes(keyword)) ||
+        (order.product_name && order.product_name.toLowerCase().includes(keyword))
+      )
+    }
+    if (timeFilter.value !== 'all') {
+      if (timeFilter.value === 'month') {
+        filtered = filtered.filter((_, index) => index < 3)
+      } else if (timeFilter.value === 'quarter') {
+        filtered = filtered.filter((_, index) => index < 5)
+      }
+    }
+    return filtered.length
   }
-  return filtered.length
+  
+  // 否则使用后端返回的total
+  return total.value
 })
 
 // 计算过滤+分页后的订单
@@ -188,33 +176,28 @@ const filteredOrders = computed(() => {
     return [];
   }
   
-  let filtered = [...orders.value]
+  // 如果订单数组为空，直接返回空数组
+  if (!orders.value || orders.value.length === 0) {
+    return [];
+  }
+  
+  let filtered = [...orders.value];
     
   if (activeTab.value !== 'all') {
     // 直接使用数字状态值进行过滤
-    filtered = filtered.filter(order => order.status === parseInt(activeTab.value))
+    filtered = filtered.filter(order => order.status === parseInt(activeTab.value));
   }
+  
   if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
-    console.log('搜索过滤(列表):', keyword, '原始数据量:', filtered.length)
+    const keyword = searchKeyword.value.toLowerCase();
     filtered = filtered.filter(order =>
       (order.order_number && order.order_number.includes(keyword)) ||
       (order.product_name && order.product_name.toLowerCase().includes(keyword))
-    )
-    console.log('搜索后数据量(列表):', filtered.length)
+    );
   }
-  if (timeFilter.value !== 'all') {
-    if (timeFilter.value === 'month') {
-      filtered = filtered.filter((_, index) => index < 3)
-    } else if (timeFilter.value === 'quarter') {
-      filtered = filtered.filter((_, index) => index < 5)
-    }
-  }
-
-  // 分页
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filtered.slice(start, end)
+  
+  // 不在前端进行分页，使用后端分页
+  return filtered;
 })
 
 // 搜索订单
@@ -236,10 +219,14 @@ function handleTimeFilterChange(value) {
 }
 // 分页相关方法
 function handleSizeChange(newSize) {
-  pageSize.value = newSize
+  pageSize.value = newSize;
+  currentPage.value = 1; // 改变每页条数时重置为第一页
+  getOrders(); // 重新获取数据
 }
+
 function handleCurrentChange(newPage) {
-  currentPage.value = newPage
+  currentPage.value = newPage;
+  getOrders(); // 重新获取数据
 }
 // 订单操作方法
 function payOrder(order) {
@@ -292,20 +279,42 @@ const total = ref(0)
 const getOrders = async () => {
   isLoading.value = true; // 开始加载
   try {
+    console.log("请求参数:", { page: currentPage.value, pageSize: pageSize.value });
+    
     const res = await orderList({
       page: currentPage.value,
       pageSize: pageSize.value
-    })
+    });
+    
+    console.log("API返回数据:", res);
+    
+    if (!res.data || !res.data.orders) {
+      console.error("API返回数据格式错误:", res);
+      orders.value = [];
+      return;
+    }
    
     orders.value = res.data.orders;
-    console.log("orders.value==",orders.value)
-    //分页面
-    currentPage.value = res.data.pagination.current_page;
-    pageSize.value = res.data.pagination.per_page;
-    total.value = res.data.pagination.total;
-    console.log("currentPage.value=",currentPage.value, "pageSize.value=", pageSize.value, "total.value=", total.value)
+    console.log("设置订单数据:", orders.value);
+    
+    // 更新分页参数
+    if (res.data.pagination) {
+      currentPage.value = res.data.pagination.current_page;
+      pageSize.value = res.data.pagination.per_page;
+      total.value = res.data.pagination.total;
+      
+      console.log("更新分页参数:", {
+        currentPage: currentPage.value,
+        pageSize: pageSize.value, 
+        total: total.value,
+        lastPage: res.data.pagination.last_page,
+        from: res.data.pagination.from,
+        to: res.data.pagination.to
+      });
+    }
   } catch (error) {
     console.error('获取订单列表失败:', error);
+    orders.value = []; // 出错时清空订单列表
   } finally {
     isLoading.value = false; // 加载完成
   }
@@ -343,6 +352,7 @@ onMounted(() => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
+
 .apple-btn:active, .apple-btn:focus {
   outline: none;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -375,7 +385,128 @@ onMounted(() => {
   transition: all 0.2s ease;
 }
 .order-item:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+}
+
+.order-container {
+  height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+
+/* 自定义分页器样式 - 手机端优化 */
+:deep(.el-pagination) {
+  --el-pagination-button-width: 28px;
+  --el-pagination-button-height: 28px;
+  font-size: 12px;
+}
+
+:deep(.el-pagination .btn-prev),
+:deep(.el-pagination .btn-next) {
+  min-width: 28px;
+  padding: 0;
+}
+
+:deep(.el-pagination .el-pager li) {
+  min-width: 24px;
+  height: 24px;
+  line-height: 24px;
+  font-size: 12px;
+  margin: 0 2px;
+}
+
+.order-list {
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.order-container::-webkit-scrollbar {
+  width: 5px;
+}
+
+.order-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.order-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.order-container::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* 更紧凑的订单项样式 */
+.order-item {
+  margin-bottom: 1px;
+  border-radius: 4px;
+  border: 1px solid #f0f0f0;
+  background-color: white;
+  overflow: hidden;
+}
+
+.order-item-header {
+  padding: 4px 8px;
+  background-color: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-item-content {
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+}
+
+.order-item-footer {
+  padding: 4px 8px;
+  background-color: #fafafa;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-image {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
+.order-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* 自定义分页器样式 - 更紧凑版本 */
+.mini-pagination {
+  --el-pagination-button-width: 24px;
+  --el-pagination-button-height: 24px;
+  font-size: 12px;
+  padding: 0;
+  margin: 0;
+}
+
+:deep(.mini-pagination .el-pager li) {
+  min-width: 20px;
+  height: 20px;
+  line-height: 20px;
+  font-size: 11px;
+  margin: 0 1px;
+}
+
+:deep(.mini-pagination .btn-prev),
+:deep(.mini-pagination .btn-next) {
+  min-width: 20px;
+  height: 20px;
+  line-height: 20px;
+  padding: 0;
 }
 </style>
     

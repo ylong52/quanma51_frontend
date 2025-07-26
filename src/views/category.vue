@@ -11,10 +11,10 @@
       >
         <div class="flex items-center space-x-2">
           <i class="fa fa-search text-gray-400 pl-3"></i>
-          <input
+        <input 
             type="text"
             placeholder="请输入商品名称"
-            v-model="searchTerm"
+          v-model="searchTerm"
             class="flex-1 h-10 bg-gray-100 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           
@@ -69,7 +69,7 @@
                   class="text-center service-item service-card"
                 >
                   <div
-                    class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-2"
+                    class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-2" @click="goToDetail(srv)"
                   >
                     <img
                       :src="srv.img"
@@ -100,7 +100,9 @@
 <script setup>
 import { ref, computed, nextTick, onMounted, watch } from "vue";
 import Footer from '@/components/page-footer.vue';
+import { useRouter } from 'vue-router';
 import * as api from "@/api";
+const router = useRouter();
 const searchTerm = ref('');
 const activeIndex = ref(0);
 const rightPanel = ref(null);
@@ -194,6 +196,10 @@ function handleSearch() {
   if (searchTerm.value.trim()) {
     console.log('搜索关键词:', searchTerm.value)
   }
+}
+
+const goToDetail = (srv) => {
+  router.push(`/productlist?category=${srv.parent_id}&category2=${srv.id}`)
 }
 </script>
 

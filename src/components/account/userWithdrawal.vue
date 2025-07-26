@@ -30,7 +30,42 @@
           size="default"
           style="width: 200px;"
         ></el-input>
-        <el-button type="primary" @click="createWithdrawal" size="default">提现</el-button>
+        
+        <!-- 添加提现方式选择 -->
+        <el-select v-model="withdrawalMethod" placeholder="提现方式" style="width: 150px; margin-left: 10px;">
+          <el-option label="支付宝" value="alipay"></el-option>
+          <el-option label="银行卡" value="bank"></el-option>
+        </el-select>
+        
+        <!-- 支付宝账号输入框 -->
+        <div v-if="withdrawalMethod === 'alipay'" style="margin-top: 10px;">
+          <el-input
+            v-model="alipayAccount"
+            placeholder="请输入支付宝账号"
+            size="default"
+            style="width: 300px;"
+          ></el-input>
+        </div>
+        
+        <!-- 银行卡账号输入框 -->
+        <div v-if="withdrawalMethod === 'bank'" style="margin-top: 10px;">
+          <el-input
+            v-model="bankAccount"
+            placeholder="请输入银行卡账号"
+            size="default"
+            style="width: 300px;"
+          ></el-input>
+        </div>
+        
+        <el-button 
+          type="primary" 
+          @click="createWithdrawal" 
+          size="default" 
+          style="margin-top: 10px;"
+          :disabled="currentBalance <= 0"
+        >
+          {{ currentBalance <= 0 ? '余额为0,不能提现' : '提现' }}
+        </el-button>
       </div>
       
     </el-card>
@@ -142,6 +177,13 @@ import * as api from '@/api/index';
 // 状态管理
 const currentBalance = ref(0);
 
+// 提现相关变量
+const showWithdrawal = ref(false);
+const withdrawalAmount = ref('');
+const withdrawalMethod = ref('alipay'); // 默认选择支付宝
+const alipayAccount = ref(''); // 支付宝账号
+const bankAccount = ref(''); // 银行卡账号
+
 const getCurrentBalance = async () => {
   let res = await api.getUserInfo();
   currentBalance.value = res.userinfo.balance;
@@ -252,9 +294,6 @@ const deleteWithdrawal = (row) => {
   });
 };
 
-const showWithdrawal = ref(false);
-const withdrawalAmount = ref('');
-
 const showWithdrawalDialog = () => {
   showWithdrawal.value = true; 
 };
@@ -268,18 +307,34 @@ const createWithdrawal = async () => {
     ElMessage.error('提现金额不得大于当前余额');
     return;
   }
+  
+  // 验证账号信息
+  if (withdrawalMethod.value === 'alipay' && !alipayAccount.value) {
+    ElMessage.error('请输入支付宝账号');
+    return;
+  }
+  if (withdrawalMethod.value === 'bank' && !bankAccount.value) {
+    ElMessage.error('请输入银行卡账号');
+    return;
+  }
+  
   try {
     let res = await api.createUserWithdrawal({
-      amount: withdrawalAmount.value
+      amount: withdrawalAmount.value,
+      method: withdrawalMethod.value,
+      account: withdrawalMethod.value === 'alipay' ? alipayAccount.value : bankAccount.value
     });
     if (res.status == 'success') {
       ElMessage.success('申请成功');
+      getuserBalance();
     } else {
       ElMessage.error(res.message);
     }
      
     showWithdrawal.value = false;
     withdrawalAmount.value = '';
+    alipayAccount.value = '';
+    bankAccount.value = '';
     // 刷新余额和列表
     getCurrentBalance();
     getWithdrawalRecord();
@@ -288,6 +343,14 @@ const createWithdrawal = async () => {
     ElMessage.error('提现失败');
   }
 };
+
+
+const getuserBalance =  () => {
+  debugger;
+  const res = api.getUserBalance()
+  userStore.setBalance(res.balance)  
+}
+
 
 const handleSizeChange = (val) => {
   pageSize.value = val;
@@ -309,11 +372,11 @@ function handleQuery() {
 watch(withdrawalId, (newVal) => {
   // 当搜索内容变化时，可以触发查询
   console.log('搜索内容变化:', newVal);
-});
+});adfadf
 
 // 页面加载时的初始化
 onMounted(() => {
-  // 可以添加页面初始化逻辑
+  getuserBalance();
 });
 </script>
 

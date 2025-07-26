@@ -75,7 +75,20 @@
     </div>
     <!-- 底部支付按钮 -->
     <div class="bg-white border-t border-gray-200 z-10 w-full mt-4">
-      <button @click="handlePay" class="block w-full text-center bg-orange-500 text-white text-base font-bold py-3 rounded-lg mx-auto shadow active:scale-95 transition-all">立即支付</button>
+      <button 
+        @click="handlePay" 
+        :disabled="isPaying"
+        class="block w-full text-center bg-orange-500 text-white text-base font-bold py-3 rounded-lg mx-auto shadow active:scale-95 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+      >
+        <span v-if="isPaying" class="flex items-center justify-center">
+          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          支付中...
+        </span>
+        <span v-else>立即支付</span>
+      </button>
     </div>
   </div>
 </template>
@@ -110,6 +123,7 @@ const contactInfo = ref('');
 const goodsDetail = ref(null); // 初始化为null而不是空对象
 const isSubmitted = ref(false); // 新增：用于控制是否已提交
 const buyNumber = ref(1); // 购买数量，默认为1
+const isPaying = ref(false); // 新增：用于防抖，防止重复点击
 
 onMounted(() => {
   getProductDetail();
@@ -134,6 +148,14 @@ const getProductDetail = async () => {
     ElMessage.error('获取商品详情失败');
   }
 };
+
+//获取用户余额
+const getuserBalance = async () => {
+  const res = await api.getUserBalance()
+  userStore.setBalance(res.balance)
+  // userInfo.balance 会自动响应式更新
+}
+
 
 // 增加购买数量
 const increaseNumber = () => {
@@ -169,10 +191,18 @@ const validateBuyNumber = () => {
 };
 
 const handlePay = async () => {
+  // 防抖：如果正在支付中，直接返回
+  if (isPaying.value) {
+    return;
+  }
+  
   isSubmitted.value = true; // 设置已提交状态
   if (goodsDetail.value && goodsDetail.value.accountRequired === 1 && !contactInfo.value) {
     return;
   }
+  
+  // 设置支付状态，防止重复点击
+  isPaying.value = true;
   
   try {
     //下单
@@ -182,8 +212,9 @@ const handlePay = async () => {
       accountRequired: goodsDetail.value && goodsDetail.value.accountRequired,
       account: contactInfo.value
     });
-     
+    
     if (res.status == 'success') {
+      getuserBalance(); 
       //提示选择，已经下单成功，是否前往订单页面 或 返回首页购物
       ElMessageBox.confirm('已经下单成功，是否前往订单页面 或 返回首页购物', '提示', {
         confirmButtonText: '前往订单页面',
@@ -203,6 +234,9 @@ const handlePay = async () => {
   } catch (error) {
     console.error('创建订单失败:', error);
     ElMessage.error('创建订单失败');
+  } finally {
+    // 无论成功还是失败，都要重置支付状态
+    isPaying.value = false;
   }
 };
 </script>

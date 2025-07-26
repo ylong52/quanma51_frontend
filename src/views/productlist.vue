@@ -8,9 +8,16 @@
         <font-awesome-icon :icon="['fas', 'chevron-down']" class="category-icon" id="categoryIcon" @click="toggleCategoryDropdown" />
       </div>
       <div class="search-container">
-        <input type="text" placeholder="请输入您想要的商品" class="search-input" v-model="searchTerm">
+        <input type="text" placeholder="请输入您想要的商品" class="search-input" v-model="searchTerm" @input="handleSearch">
+        <!-- 清除按钮 -->
+        <font-awesome-icon 
+          v-if="searchTerm" 
+          :icon="['fas', 'times-circle']" 
+          class="clear-icon" 
+          @click="clearSearch" 
+        />
         <!-- 搜索图标（使用Font Awesome组件） -->
-        <font-awesome-icon :icon="['fas', 'search']" class="search-icon" />
+        <font-awesome-icon v-else :icon="['fas', 'search']" class="search-icon" @click="handleSearch" />
       </div>
       <!-- 列表样式切换图标（使用Font Awesome组件） -->
       <font-awesome-icon :icon="listViewStyle === 'grid' ? ['fas', 'th-large'] : ['fas', 'list']" class="view-style-icon" @click="toggleListViewStyle" />
@@ -61,8 +68,8 @@
 
     <!-- 商品列表 -->
     <div class="goods-list" :class="{ 'grid-view': listViewStyle === 'grid', 'list-view': listViewStyle === 'list' }">
-      <template v-if="goodsData.length > 0">
-        <div class="goods-item" v-for="goods in goodsData" :key="goods.id">
+      <template v-if="filteredGoods.length > 0">
+        <div class="goods-item" v-for="goods in filteredGoods" :key="goods.id">
           <img :src="goods.imgUrl" alt="{{ goods.name }}" class="goods-img" loading="lazy">
           <div class="goods-info">
            
@@ -76,7 +83,7 @@
       </template>
       <div class="goods-item" v-else>
         <div class="text-center text-gray-400 text-base">
-          暂无商品
+          {{ searchTerm ? '没有找到相关商品' : '暂无商品' }}
         </div>
       </div>
     </div>
@@ -92,7 +99,7 @@ import { ref, reactive, computed,onUnmounted, watch,onMounted } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import Footer from '@/components/page-footer.vue';
-import { faChevronDown, faSearch, faThLarge, faList } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faSearch, faThLarge, faList, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import * as api from "@/api";
 import { useRoute } from 'vue-router';
 import { useRouter } from 'vue-router';
@@ -100,7 +107,7 @@ const route = useRoute();
 const router = useRouter();
 
 // 注册Font Awesome图标
-library.add(faChevronDown, faSearch, faThLarge, faList);
+library.add(faChevronDown, faSearch, faThLarge, faList, faTimesCircle);
 const icons = {
   faChevronDown,
   faSearch,
@@ -158,7 +165,13 @@ const getProductCategory = async () => {
 
   let category2_id = route.query.category2?(route.query.category2 - 0):0;
   if(category2_id > 0){
+    // 设置选中的二级分类ID
+    selectedSubCategoryId.value = category2_id;
+    // 确保使用传入的category2_id加载商品列表
     getProductList(category2_id);
+    
+    // 调试输出
+    console.log('从URL接收到category2_id:', category2_id, '设置selectedSubCategoryId为:', selectedSubCategoryId.value);
   }
 
 };
@@ -183,12 +196,24 @@ const bottomNavItems = reactive([
 
 // 过滤后的商品列表
 const filteredGoods = computed(() => {
-  if (!searchTerm.value.trim()) return goodsData;
-  return goodsData.filter(goods => 
-    goods.title.toLowerCase().includes(searchTerm.value.trim().toLowerCase())
+  if (!searchTerm.value.trim()) return goodsData.value;
+  return goodsData.value.filter(goods => 
+    goods.name && goods.name.toLowerCase().includes(searchTerm.value.trim().toLowerCase())
   );
 });
 
+// 处理搜索
+const handleSearch = () => {
+  console.log('搜索商品:', searchTerm.value);
+  // 这里使用计算属性filteredGoods自动过滤，无需额外操作
+};
+
+// 清除搜索内容
+const clearSearch = () => {
+  searchTerm.value = '';
+  console.log('清除搜索内容');
+  // 清除后会自动触发计算属性重新计算
+};
  
 // 方法
 const toggleCategoryDropdown = () => {
@@ -235,8 +260,11 @@ const getProductList = async (subCategory_id) => {
 }
 
 watch(subCategorys, (newList) => {
-  if (newList.length > 0) {
-    selectedSubCategoryId.value = newList[0].id
+  // 只有在selectedSubCategoryId为null或未定义时才设置默认值
+  // 这样可以避免覆盖从URL传入的category2参数
+  if (newList.length > 0 && !selectedSubCategoryId.value) {
+    console.log('设置默认二级分类ID:', newList[0].id);
+    selectedSubCategoryId.value = newList[0].id;
   }
 }, { immediate: true })
 
@@ -354,6 +382,23 @@ onUnmounted(() => {
   color: #999;
 }
 
+.clear-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #aaa;
+  cursor: pointer;
+  z-index: 2; /* 确保它在搜索图标上方 */
+  transition: color 0.2s;
+}
+
+.clear-icon:hover {
+  color: #ff4d4f; /* 鼠标悬停时变红色 */
+}
+
 .view-style-icon {
   width: 16px;
   height: 16px;
@@ -372,12 +417,31 @@ onUnmounted(() => {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
   z-index: 9;
   max-height: 0;
-  overflow: hidden;
+  overflow-y: auto; /* 允许垂直滚动 */
   transition: max-height 0.3s ease-out;
 }
 
 .category-dropdown.active {
-  max-height: 500px;
+  max-height: 300px; /* 限制最大高度，超出时显示滚动条 */
+}
+
+/* 自定义滚动条样式 */
+.category-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.category-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.category-dropdown::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.category-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
 }
 
 .category-grid {
@@ -433,6 +497,27 @@ onUnmounted(() => {
 /* 商品列表 */
 .goods-list {
   padding: 10px;
+  max-height: calc(100vh - 220px); /* 减去其他元素的高度，确保在屏幕内显示 */
+  overflow-y: auto; /* 允许垂直滚动 */
+}
+
+/* 自定义商品列表滚动条样式 */
+.goods-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.goods-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.goods-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.goods-list::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
 }
 
 /* 网格视图 */

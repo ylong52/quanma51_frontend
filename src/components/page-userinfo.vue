@@ -33,6 +33,7 @@ import { faUserCircle } from '@fortawesome/free-solid-svg-icons'
 import { useToast } from 'vue-toast-notification';
 library.add(faUserCircle)
 import { useUserStore } from '../store/user'
+import { getUserBalance } from "@/api";
 const userStore = useUserStore();
 const toast = useToast();
 const router = useRouter();
@@ -54,6 +55,14 @@ function handleUserAction() {
     gotoPersonalCenter();
   }
 }
+
+//获取用户余额
+const userBalance = async () => {
+  const res = await getUserBalance()
+  userStore.setBalance(res.balance)
+  // userInfo.balance 会自动响应式更新
+}
+userBalance();
 
 // 退出登录
 function logout() {

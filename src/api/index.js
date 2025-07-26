@@ -4,6 +4,11 @@ import { request } from '@/utils/request';
 export const login = (data) => request.post('/api/login', data);
 export const logout = () => request.post('/api/logout');
 export const getUserInfo = () => request.get('/api/userinfo');
+
+
+//获取用户余额
+export const getUserBalance = () => request.get('/api/user/balance');
+
 export const getProductCategory = (params) => request.get('/api/product/category',   params );
 export const getProductCategoryLevel2 = () => request.get('/api/product/category/level2');
 
@@ -30,6 +35,8 @@ export const orderList = (params) => request.post(`/api/order/list`, params);
 
 //rechargeRecord
 export const rechargeRecord = (params) => request.post(`/api/recharge/list`, params);
+//充值
+export const rechargeCreatepay = (params) => request.post(`/api/recharge/createpay`, params);
 
 //userWithdrawalList
 export const userWithdrawalList = (params) => request.post(`/api/withdrawal/list`, params);

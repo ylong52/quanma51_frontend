@@ -26,20 +26,20 @@
                 <font-awesome-icon :icon="'yen-sign'" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input type="number"
                   class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-orange-400 text-base"
-                  placeholder="请输入充值金额" />
+                  placeholder="请输入充值金额"  v-model="rechargeAmount"/>
               </div>
             </div>
             <div class="mb-4">
               <label class="block text-sm mb-1">充值方式</label>
-              <select class="w-full border border-gray-200 rounded py-2 px-3 text-base">
+              <select class="w-full border border-gray-200 rounded py-2 px-3 text-base" v-model="rechargeMethod">
                 <option value="alipay">支付宝</option>
                 <option value="wechat">微信支付</option>
                
               </select>
             </div>
             <button
-              class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded mt-2 flex items-center justify-center">
-              <font-awesome-icon :icon="'plus-circle'" class="mr-2" />立即充值
+              class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded mt-2 flex items-center justify-center" @click="handleRecharge">
+              <font-awesome-icon :icon="'plus-circle'" class="mr-2"  />立即充值
             </button>
           </div>
         </div>
@@ -278,6 +278,22 @@ const rechargeRecord = async () => {
   } finally {
     isLoading.value = false;
   }
+}
+
+const rechargeMethod = ref('alipay');
+const rechargeAmount = ref(100)
+const handleRecharge = async () => {
+  api.rechargeCreatepay({
+    amount: rechargeAmount.value,
+    way_type: rechargeMethod.value
+  }).then(res => {
+    if (res.status == 'success' && res.payinfo.pay_info) {
+      
+      window.location.href = res.payinfo.pay_info;
+    }
+    debugger;
+    console.log(res);
+  })
 }
 
 onMounted(() => {
