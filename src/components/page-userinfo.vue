@@ -78,6 +78,15 @@ const gotoPersonalCenter = () => {
     showLoginPopup.value = true;
   }
 }
+
+// const checkToken = async () => {
+ 
+//   const res = await checkToken()
+//   console.log(res)
+//   if (re)
+// }
+
+// checkToken();
 </script>
 
 <style scoped>

@@ -1,10 +1,16 @@
 <template>
   <div class="min-h-screen bg-gray-100 flex flex-col items-center">
-    <div class="w-full max-w-md mx-auto flex-1">
-      <!-- 顶部导航 -->
-      <Header />
-      <UserInfo />
-       <Content />  
+    <div class="w-full max-w-md mx-auto flex-1 relative">
+      <!-- 顶部导航 - 固定位置 -->
+      <div class="fixed top-0 left-0 right-0 z-50 w-full max-w-md mx-auto">
+        <Header />
+      </div>
+      
+      <!-- 为固定头部留出空间 -->
+      <div class="pt-16">
+        <Content />  
+      </div>
+      
       <Footer /> 
     </div>
   </div>

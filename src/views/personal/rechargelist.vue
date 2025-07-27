@@ -10,6 +10,12 @@
           </router-link>
           <div class="flex-1 text-center text-lg font-bold text-gray-800">充值管理</div>
         </div>
+        
+        <!-- 登录检查 -->
+        <div v-if="!isLoggedIn" class="flex items-center justify-center h-screen">
+          <Login :show="showLoginPopup" @close="onLoginClose" />
+        </div>
+        <div v-else>
  
         <!-- 提示信息 -->
       <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-md mb-4 mt-12">
@@ -126,7 +132,11 @@
                   <div>
                     <div class="text-orange-500 font-bold text-base">+{{ item.amount }}元</div>
                     <div class="text-xs text-gray-400 mt-1">{{ item.payment_method_text }}</div>
-                    <div class="text-xs text-gray-500 mt-1">订单号: {{ item.order_no || '无' }}</div>
+                    <div class="text-xs text-gray-500 mt-1">订单号: {{ item.order_no || '-' }}</div>
+                    <div class="text-xs text-gray-500 mt-1">充值金额: {{ item.amount || '-' }}元</div>
+                    <div class="text-xs text-gray-500 mt-1">手续费: {{ item.handling_fee || '0' }}元</div>
+                    <div class="text-xs text-gray-500 mt-1">小计: {{ item.total_amount || item.amount }}元</div>
+   
                   </div>
                   <div class="flex flex-col items-end">
                     <span
@@ -144,7 +154,7 @@
                 :page-size="pageSize"
                 layout="prev, pager, next" 
                 :total="total" 
-                small 
+                size="small" 
                 background 
                 :hide-on-single-page="true" 
                 :pager-count="5"
@@ -157,20 +167,41 @@
         </div>
         <div class="h-10"></div>
       </div>
+      </div>
     </div>
   </el-config-provider>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faUser, faMoneyBillWave, faChevronDown, faChevronUp, faYenSign, faPlusCircle, faHistory, faSearch, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faMoneyBillWave, faChevronDown, faChevronUp, faYenSign, faPlusCircle, faHistory, faSearch, faSync, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs';
 import { ElConfigProvider } from 'element-plus';
 import { ElMessage } from 'element-plus'; // Added ElMessage import
-library.add(faUser, faMoneyBillWave, faChevronDown, faChevronUp, faYenSign, faPlusCircle, faHistory, faSearch, faSync);
+library.add(faUser, faMoneyBillWave, faChevronDown, faChevronUp, faYenSign, faPlusCircle, faHistory, faSearch, faSync, faExclamationCircle);
 import * as api from "@/api";
+import Login from '@/views/login.vue';
+import { useUserStore } from '@/store/user';
+
+const userStore = useUserStore();
+
+// 登录状态管理
+const isLoggedIn = computed(() => {
+  return userStore.userInfo && userStore.userInfo.isLoggedIn;
+});
+const showLoginPopup = ref(true);
+
+// 登录窗口关闭处理
+const onLoginClose = () => {
+  showLoginPopup.value = false;
+  // 如果登录成功，isLoggedIn 会自动变为 true
+  // 如果登录失败但关闭了窗口，则返回上一页
+  if (!isLoggedIn.value) {
+    history.back();
+  }
+};
 
 const showForm = ref(false);
 const searchStatus = ref('all');
@@ -359,8 +390,19 @@ const handleRecharge = async () => {
   }
 }
 
+// 监听登录状态变化
+watch(isLoggedIn, (newVal) => {
+  if (newVal === true) {
+    // 用户登录后加载数据
+    rechargeRecord();
+  }
+});
+
 onMounted(() => {
-  rechargeRecord();
+  // 只有在用户已登录的情况下才加载数据
+  if (isLoggedIn.value) {
+    rechargeRecord();
+  }
 });
 </script>
 

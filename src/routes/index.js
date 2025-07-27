@@ -8,11 +8,25 @@ export default [
     component: () => import('@/views/index.vue')
   },
   {
-    path: '/regsiter',
-    name: 'regsiter',
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/login2.vue')
+  },
+  {
+    path: '/register',
+    name: 'register',
     component: () => import('@/views/Register.vue')
   },
-  
+  {
+    path: '/forgot-password',
+    name: 'forgotPassword',
+    component: () => import('@/views/ForgotPassword.vue')
+  },
+  {
+    path: '/queryproduct',
+    name: 'queryproduct',
+    component: () => import('@/views/queryproduct.vue')
+  },
   {
     path: '/payment',
     name: 'payment',
@@ -99,6 +113,11 @@ export default [
     path: '/personal/promotion',
     name: 'promotion',
     component: () => import('@/views/personal/promotion.vue')
+  },
+  {
+    path: '/personal/change-password',
+    name: 'changePassword',
+    component: () => import('@/views/personal/ChangePassword.vue')
   }
   
 ] 

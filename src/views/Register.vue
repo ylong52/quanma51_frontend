@@ -1,15 +1,18 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex flex-col">
     <!-- 顶部导航 -->
-    <div class="bg-white border-b border-gray-200 py-3 px-4">
+    <div class="bg-white border-b border-gray-200 py-3 px-4 relative">
+      <router-link to="/" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+        <font-awesome-icon :icon="'home'" />
+      </router-link>
       <h1 class="text-xl font-bold text-center text-gray-800">注册新账户</h1>
     </div>
 
     <!-- 主内容区 -->
-    <div class="flex-1 flex items-center justify-center p-4">
+    <div class="flex-1 flex   justify-center p-4">
       <div class="w-full max-w-md">
         <div class="text-center mb-8">
-          <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div class="w-16  bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <i class="fa fa-user-plus text-3xl text-primary"></i>
           </div>
           <p class="text-gray-500 mt-1">注册后即可享受更多服务</p>
@@ -64,10 +67,13 @@
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fa fa-lock text-gray-400"></i>
               </div>
-              <input type="password" id="reg-password" v-model="registerForm.password"
-                class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
+              <input :type="showPassword ? 'text' : 'password'" id="reg-password" v-model="registerForm.password"
+                class="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
                 placeholder="请输入密码"
                 required>
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer" @click="togglePassword">
+                <font-awesome-icon :icon="showPassword ? 'eye-slash' : 'eye'" class="text-gray-400" />
+              </div>
             </div>
           </div>
 
@@ -93,6 +99,12 @@ import { ref, onMounted } from 'vue'
 import { useToast } from 'vue-toast-notification'
 import * as api from '@/api';
 import { useRouter } from 'vue-router';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faHome,faEye,faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+
+// 添加图标到库
+library.add(faHome,faEye,faEyeSlash);
 
 const router = useRouter();
 
@@ -106,6 +118,14 @@ const registerForm = ref({
 
 // 加载状态
 const loading = ref(false)
+
+// 密码显示状态
+const showPassword = ref(false);
+
+// 切换密码显示状态
+const togglePassword = () => {
+  showPassword.value = !showPassword.value;
+};
 
 // 跳转到登录页
 const goToLogin = () => {

@@ -47,7 +47,7 @@
                   class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
                 <label for="rememberMe" class="ml-2 block text-sm text-gray-700">记住我</label>
               </div>
-              <a href="#" class="text-sm font-medium text-primary hover:text-primary/80 transition-custom">忘记密码?</a>
+              <router-link to="/forgot-password" class="text-sm font-medium text-primary hover:text-primary/80 transition-custom">忘记密码?</router-link>
             </div>
             <button type="submit"
               class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-lg transition-custom shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
@@ -73,7 +73,7 @@ import { useUserStore } from '../store/user'
 import * as api from '@/api';
 
 const props = defineProps({ show: Boolean })
-const emit = defineEmits(['close', 'goToRegister'])
+const emit = defineEmits(['close', 'goToRegister', 'goToForgotPassword'])
 const userStore = useUserStore()
 
 // 登录表单数据

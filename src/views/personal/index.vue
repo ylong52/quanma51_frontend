@@ -36,28 +36,29 @@
         <router-link to="/personal/order" class="text-xs text-gray-400">查看更多&gt;</router-link>
       </div>
       <div class="flex justify-around py-3 border-b border-gray-100">
-        <a href="#" class="flex flex-col items-center text-gray-700">
+        <router-link to="/personal/order?status=0" class="flex flex-col items-center text-gray-700">
           <font-awesome-icon
             :icon="'credit-card'"
             class="w-6 h-6 mb-1 text-blue-500"
           />
           <div class="text-xs">待付款</div>
-        </a>
-        <a href="#" class="flex flex-col items-center text-gray-700">
-          <font-awesome-icon
-            :icon="'clock'"
-            class="w-6 h-6 mb-1 text-yellow-500"
-          />
-          <div class="text-xs">待处理</div>
-        </a>
-
-        <a href="#" class="flex flex-col items-center text-gray-700">
+        </router-link>
+ 
+        <router-link to="/personal/order?status=1" class="flex flex-col items-center text-gray-700">
           <font-awesome-icon
             :icon="'check-circle'"
             class="w-6 h-6 mb-1 text-green-500"
           />
           <div class="text-xs">已完成</div>
-        </a>
+        </router-link>
+
+        <router-link to="/personal/order?status=refund" class="flex flex-col items-center text-gray-700">
+          <font-awesome-icon
+            :icon="'undo'"
+            class="w-6 h-6 mb-1 text-red-500"
+          />
+          <div class="text-xs">已退款</div>
+        </router-link>
       </div>
       <!-- 功能按钮区 -->
       <div class="flex flex-col px-4 py-4 space-y-3">
@@ -83,22 +84,35 @@
           <font-awesome-icon :icon="'bullhorn'" class="w-6 h-6 mr-3" />推广管理
         </router-link>
         <router-link
+          to="/personal/change-password"
+          class="flex items-center rounded-lg px-4 py-3 bg-indigo-500 text-white font-medium"
+        >
+          <font-awesome-icon :icon="'lock'" class="w-6 h-6 mr-3" />修改密码
+        </router-link>
+        <router-link
           to="/"
           class="flex items-center rounded-lg px-4 py-3 bg-purple-500 text-white font-medium"
         >
           <font-awesome-icon :icon="'home'" class="w-6 h-6 mr-3" />回到首页
         </router-link>
+        <button
+          @click="handleLogout"
+          class="flex items-center rounded-lg px-4 py-3 bg-red-500 text-white font-medium"
+        >
+          <font-awesome-icon :icon="'sign-out-alt'" class="w-6 h-6 mr-3" />退出登录
+        </button>
       </div>
     </div>
   </div>
-  <login :show="showLoginPopup" @close="showLoginPopup = false" />
+  <login :show="showLoginPopup" @close="handleLoginClose" @goToRegister="handleGoToRegister" @goToForgotPassword="handleGoToForgotPassword" />
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import Login from "@/views/login.vue";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { library } from "@fortawesome/fontawesome-svg-core";
+import { useRouter } from "vue-router";
 import {
   faCreditCard,
   faClock,
@@ -109,6 +123,8 @@ import {
   faWallet,
   faBullhorn,
   faHome,
+  faSignOutAlt,
+  faLock,
 } from "@fortawesome/free-solid-svg-icons";
 library.add(
   faCreditCard,
@@ -119,7 +135,9 @@ library.add(
   faMoneyBillWave,
   faWallet,
   faBullhorn,
-  faHome
+  faHome,
+  faSignOutAlt,
+  faLock
 );
 
 import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
@@ -128,8 +146,33 @@ library.add(faUserCircle);
 import { useUserStore } from "../../store/user";
 import { getUserBalance } from "@/api";
 const userStore = useUserStore();
+const router = useRouter();
 console.log(userStore.userInfo);
 const toast = useToast();
+
+const handleLogout = () => {
+  userStore.logout();
+  toast.success('退出成功');
+  router.push('/');
+};
+
+// 处理前往注册页面
+const handleGoToRegister = () => {
+  console.log("Navigating to register page");
+  // 临时关闭登录窗口
+  showLoginPopup.value = false;
+  // 导航到注册页面
+  router.push('/register');
+};
+
+// 处理前往忘记密码页面
+const handleGoToForgotPassword = () => {
+  console.log("Navigating to forgot password page");
+  // 临时关闭登录窗口
+  showLoginPopup.value = false;
+  // 导航到忘记密码页面
+  router.push('/forgot-password');
+};
 
 const userInfo = computed(() => {
   // 兼容 userStore.userInfo 可能是ref/computed
@@ -151,9 +194,53 @@ const userBalance = async () => {
 userBalance();
 
 const showLoginPopup = ref(false);
+
+// 组件挂载时检查登录状态
+onMounted(() => {
+  if (!userInfo.value.isLoggedIn) {
+    showLoginPopup.value = true;
+  }
+});
+
+// 处理登录窗口关闭事件
+const handleLoginClose = () => {
+  // 检查用户是否已登录
+  if (!userInfo.value.isLoggedIn) {
+    // 如果未登录，继续显示登录窗口
+    setTimeout(() => {
+      showLoginPopup.value = true;
+    }, 300); // 短暂延迟，避免视觉上的闪烁
+  } else {
+    // 如果已登录，关闭登录窗口
+    showLoginPopup.value = false;
+  }
+};
+
+// 初始检查登录状态
 if (userInfo.value.isLoggedIn == false) {
   showLoginPopup.value = true;
 }
+
+// 监听登录状态变化
+watch(() => userInfo.value.isLoggedIn, (isLoggedIn) => {
+  if (!isLoggedIn) {
+    // 如果用户登出或登录状态变为未登录，显示登录窗口
+    // 检查当前路由，如果不是注册页面才显示登录窗口
+    if (router.currentRoute.value.path !== '/register') {
+      showLoginPopup.value = true;
+    }
+  } else {
+    // 如果用户登录成功，关闭登录窗口
+    showLoginPopup.value = false;
+  }
+});
+
+// 监听路由变化，当用户从注册页面返回时，如果未登录则显示登录窗口
+watch(() => router.currentRoute.value.path, (path) => {
+  if (path === '/personal/index' && !userInfo.value.isLoggedIn) {
+    showLoginPopup.value = true;
+  }
+});
 
 // const showLoginPopup = ref(false);
 

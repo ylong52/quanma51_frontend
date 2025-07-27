@@ -24,7 +24,7 @@
             { label: '待付款', name: '0' },         
             { label: '已完成', name: '1' },
             { label: '已退款', name: 'refund' }
-          ]" :key="tab.name" @click="activeTab = tab.name"
+          ]" :key="tab.name" @click="handleTabClick(tab.name)"
             :class="['px-2 pb-1 text-sm font-medium border-b-2', activeTab === tab.name ? 'text-orange-500 border-orange-500' : 'text-gray-500 border-transparent']">
             {{ tab.label }}
           </button>
@@ -45,8 +45,12 @@
               class="rounded-xl bg-white shadow border border-gray-100 overflow-hidden">
               <div class="flex justify-between items-center px-4 py-2 border-b border-gray-50">
                 <div class="text-xs text-gray-500">
-                  <span class="font-bold text-gray-800">订单号：{{ order.order_number }}</span>
-                  <span class="ml-3">{{ order.created_at }}</span>
+                  <div>
+                    <span class="font-bold text-gray-800">订单号：{{ order.order_number }}</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-500">{{ order.created_at }}</span>
+                  </div>
                 </div>
                 <div class="font-medium flex items-center" :class="{
                   'text-orange-500': order.status === 0,
@@ -82,10 +86,15 @@
         </div>
       </div>
       <!-- 固定底部分页 -->
-      <div class="fixed left-0 right-0 bottom-0 bg-white border-t border-gray-200 z-20 max-w-md mx-auto w-full">
-        <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage"
-          :page-sizes="[5, 10, 20]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper"
-          :total="filteredOrdersTotal" class="bg-white rounded shadow px-2" :background="true" :small="true" />
+      <div class="fixed left-0 right-0 bottom-0 bg-white border-t border-gray-200 z-20 max-w-md mx-auto w-full flex justify-center">
+        <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" 
+        :current-page="currentPage"
+          :page-sizes="[5, 10, 20]" 
+          :page-size="pageSize" 
+          layout="prev, pager, next" 
+          :total="filteredOrdersTotal"  class="mini-pagination"
+         
+          :small="true" />
       </div>
     </main>
   </el-config-provider>
@@ -115,12 +124,31 @@ const pageSize = ref(5)
 // 模拟订单数据
 const orders = ref([])
 
+// 从URL获取状态参数
+import { useRoute, useRouter } from 'vue-router'
+const route = useRoute()
+const router = useRouter()
+
+// 在组件挂载时设置activeTab
+onMounted(() => {
+  // 获取URL中的status参数
+  const statusParam = route.query.status
+  if (statusParam) {
+    activeTab.value = statusParam
+  }
+  getOrders()
+})
+
 // 计算过滤后的订单总数（不分页）
 const filteredOrdersTotal = computed(() => {
   let filtered = [...orders.value]
   if (activeTab.value !== 'all') {
     // 直接使用数字状态值进行过滤
-    filtered = filtered.filter(order => order.status === parseInt(activeTab.value))
+    if (activeTab.value === 'refund') {
+      filtered = filtered.filter(order => order.status === 3) // 假设3是退款状态
+    } else {
+      filtered = filtered.filter(order => order.status === parseInt(activeTab.value))
+    }
   }
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase()
@@ -154,7 +182,11 @@ const filteredOrders = computed(() => {
 
   if (activeTab.value !== 'all') {
     // 直接使用数字状态值进行过滤
-    filtered = filtered.filter(order => order.status === parseInt(activeTab.value))
+    if (activeTab.value === 'refund') {
+      filtered = filtered.filter(order => order.status === 3) // 假设3是退款状态
+    } else {
+      filtered = filtered.filter(order => order.status === parseInt(activeTab.value))
+    }
   }
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase()
@@ -189,6 +221,19 @@ function searchOrders() {
 function handleTabChange(tabName) {
   console.log('状态选项卡切换:', tabName)
   currentPage.value = 1 // 重置到第一页
+}
+
+// 处理标签页点击
+function handleTabClick(tabName) {
+  activeTab.value = tabName
+  // 更新URL，但不触发路由导航
+  const query = { ...route.query }
+  if (tabName === 'all') {
+    delete query.status
+  } else {
+    query.status = tabName
+  }
+  router.replace({ query })
 }
 
 // 时间筛选器变化事件
@@ -262,10 +307,21 @@ const total = ref(0)
 const getOrders = async () => {
   isLoading.value = true; // 开始加载
   try {
-    const res = await orderList({
+    const params = {
       page: currentPage.value,
       pageSize: pageSize.value
-    })
+    };
+    
+    // 如果不是全部，添加状态过滤
+    if (activeTab.value !== 'all') {
+      if (activeTab.value === 'refund') {
+        params.status = 3; // 退款状态
+      } else {
+        params.status = parseInt(activeTab.value);
+      }
+    }
+    
+    const res = await orderList(params)
 
     orders.value = res.data.orders;
     console.log("orders.value==", orders.value)
@@ -286,8 +342,11 @@ watch(searchKeyword, (newValue) => {
   currentPage.value = 1 // 重置到第一页
 })
 
-onMounted(() => {
-  getOrders()
+// 监听标签页变化
+watch(activeTab, (newValue) => {
+  console.log('标签页变化:', newValue)
+  currentPage.value = 1 // 重置到第一页
+  getOrders() // 重新加载订单
 })
 
 </script>

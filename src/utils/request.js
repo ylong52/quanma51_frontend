@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { useToast } from 'vue-toast-notification'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 // 创建axios实例
 const service = axios.create({
@@ -36,7 +39,8 @@ service.interceptors.response.use(
     switch (response.status) {
       case 200:
         return Promise.resolve(res);
-      case 400:        
+      case 400:   
+   
         showError('请求参数错误', res.message);
         return Promise.reject(res);
       case 401:
@@ -58,34 +62,35 @@ service.interceptors.response.use(
     }
   },
   (error) => {
-    // debugger;
-    // console.error('响应错误:', error);
-    if (error.status == 400) {
-      showError('请求参数错误', error.response.data.message || error.message);
-        //已经处理了错误，返回空
-      return Promise.resolve({});
-    }
+    
+ 
+ 
     if (error.status == 401) {
-      showError('未授权', '登录状态失败或已过期，请重新登录');
-
+      showError('未授权', '登录失败或已过期，请重新登录');
+ 
       // redirectToLogin();
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('token')
+      sessionStorage.removeItem('userInfo')
+      sessionStorage.removeItem('token')
+      userStore.logout();
       return Promise.reject({});
-    }
-    if (error.status == 403) {
+    }else if (error.status == 400) {
+      showError('请求参数错误', error.response.data.message || error.message);
+      return Promise.reject({});
+    }else if (error.status == 403) {
       showError('权限不足', '您没有权限执行此操作');
       return Promise.reject({});
-    }
-    if (error.status == 404) {
+    }else if (error.status == 404) {
       showError('资源未找到', error.response.data.message || error.message);
       return Promise.reject({});
-    }
-    if (error.status == 500) {
+    }else if (error.status == 500) {
       showError('服务器错误', error.response.data.message || error.message);
       return Promise.reject({});
+    }else {
+      showError('网络错误', error.message || '网络连接失败');
+      return Promise.reject(res);
     }
-
-    showError('网络错误', error.message || '网络连接失败');
-    return Promise.reject({});
   }
 );
 
@@ -98,7 +103,7 @@ function showError(title, message) {
 function redirectToLogin() {
   console.log('跳转到登录页面');
   // 实际项目中应使用路由跳转
-  // router.push('/login');
+  router.push('/login');
 }
 
 // 导出request对象

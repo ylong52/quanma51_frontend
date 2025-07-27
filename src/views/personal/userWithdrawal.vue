@@ -12,6 +12,12 @@
         </router-link>
       </div>
       
+      <!-- 登录检查 -->
+      <div v-if="!isLoggedIn" class="flex items-center justify-center h-screen">
+        <Login :show="showLoginPopup" @close="onLoginClose" />
+      </div>
+      <div v-else>
+      
       <!-- 提示信息 -->
       <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-md mb-4 mt-12">
         <div class="flex items-center">
@@ -23,7 +29,7 @@
       </div>
       
       <!-- 提现申请卡片 -->
-      <div class="bg-white rounded-xl shadow mb-4 mt-12">
+      <div class="bg-white rounded-xl shadow mb-4 mt-1">
         <div class="flex items-center px-4 py-3 border-b border-gray-100 cursor-pointer select-none" @click="showForm = !showForm">
           <font-awesome-icon :icon="'credit-card'" class="text-orange-500 mr-2" />
           <span class="font-bold">提现申请</span>
@@ -177,7 +183,7 @@
               layout="prev, pager, next"
               :total="total"
               background
-              small
+              size="small"
               class="pagination-mobile"
             ></el-pagination>
           </div>
@@ -189,6 +195,7 @@
         </div>
       </div>
       <div class="h-10"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -197,12 +204,13 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faUser, faCreditCard, faChevronDown, faChevronUp, faYenSign, faPaperPlane, faPlus, faHistory, faSearch, faSync, faTrash, faInbox } from '@fortawesome/free-solid-svg-icons';
-library.add(faUser, faCreditCard, faChevronDown, faChevronUp, faYenSign, faPaperPlane, faPlus, faHistory, faSearch, faSync, faTrash, faInbox);
+import { faUser, faCreditCard, faChevronDown, faChevronUp, faYenSign, faPaperPlane, faPlus, faHistory, faSearch, faSync, faTrash, faInbox, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+library.add(faUser, faCreditCard, faChevronDown, faChevronUp, faYenSign, faPaperPlane, faPlus, faHistory, faSearch, faSync, faTrash, faInbox, faExclamationCircle);
 import * as api from '@/api';
 import { useUserStore } from '@/store/user';
 import { useToast } from "vue-toast-notification";
 import { ElMessage, ElMessageBox } from 'element-plus';
+import Login from '@/views/login.vue';
 
 const userStore = useUserStore();
 const toast = useToast();
@@ -210,6 +218,22 @@ const searchStatus = ref('all');
 const withdrawalAmount = ref(0);
 const showForm = ref(false);
 const paymentMethod = ref('alipay'); // 默认选择支付宝
+
+// 登录状态管理
+const isLoggedIn = computed(() => {
+  return userStore.userInfo && userStore.userInfo.isLoggedIn;
+});
+const showLoginPopup = ref(true);
+
+// 登录窗口关闭处理
+const onLoginClose = () => {
+  showLoginPopup.value = false;
+  // 如果登录成功，isLoggedIn 会自动变为 true
+  // 如果登录失败但关闭了窗口，则返回上一页
+  if (!isLoggedIn.value) {
+    history.back();
+  }
+};
 
 const withdrawalAlipayAccount = ref('');
 const withdrawalBankName = ref('');
@@ -389,9 +413,21 @@ watch(withdrawalId, (newVal) => {
   console.log('搜索内容变化:', newVal);
 });
 
+// 监听登录状态变化
+watch(isLoggedIn, (newVal) => {
+  if (newVal === true) {
+    // 用户登录后加载数据
+    getuserBalance();
+    getWithdrawalRecord();
+  }
+});
+
 onMounted(() => {
-  getuserBalance();
-  getWithdrawalRecord(); // 加载提现记录
+  // 只有在用户已登录的情况下才加载数据
+  if (isLoggedIn.value) {
+    getuserBalance();
+    getWithdrawalRecord(); // 加载提现记录
+  }
 });
 
 </script>

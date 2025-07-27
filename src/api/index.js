@@ -4,7 +4,8 @@ import { request } from '@/utils/request';
 export const login = (data) => request.post('/api/login', data);
 export const logout = () => request.post('/api/logout');
 export const getUserInfo = () => request.get('/api/userinfo');
-
+export const forgotPassword = (data) => request.post('/api/forgotPassword', data);
+export const checkToken = () => request.get('/api/checkToken');
 
 //获取用户余额
 export const getUserBalance = () => request.get('/api/user/balance');
@@ -45,4 +46,8 @@ export const createUserWithdrawal = (data) => request.post('/api/withdrawal/crea
 // deleteUserWithdrawal
 export const deleteUserWithdrawal = (id) => request.post(`/api/withdrawal/delete/${id}`);
 
+export const promotionList = (params) => request.post(`/api/promotion/list`, params);
+
+// 修改密码
+export const changePassword = (data) => request.post('/api/change-password', data);
 
