@@ -30,7 +30,7 @@
             <div class="goods-info">
               <div class="goods-title">{{ goods.name }}</div>
               <div class="goods-sku">商品编号：{{ goods.id }}</div>
-              <div class="price">售价：{{ goods.salePrice }}元</div>
+              <div class="price">售价：{{ goods.platform_price }}元</div>
             </div>
             <button class="buy-btn" @click="goGoodsDetail(goods.id)">立即购买</button>
           </div>

@@ -11,7 +11,7 @@
     <!-- 标题 -->
     <h2 class="text-lg font-bold px-4 mt-3">{{goodsDetail.name}}</h2>
     <!-- 价格 -->
-    <div class="text-red-500 text-xl font-bold px-4 mt-2">¥{{goodsDetail.salePrice}}</div>
+    <div class="text-red-500 text-xl font-bold px-4 mt-2">¥{{goodsDetail.platform_price}}</div>
     <!-- 描述 -->
     <div class="text-sm text-gray-500 px-4 mt-1 mb-2">{{goodsDetail.type}}  {{goodsDetail.name}} </div>
     <!-- 信息项 -->
@@ -45,7 +45,7 @@
         <span class="text-xs">订单</span>
       </div>
       <div 
-        @click="toggleBuyDetailPopup" 
+        @click="handleBuyClick" 
         class="flex-[2] text-center bg-orange-500 text-white text-base font-bold py-3 rounded-lg mx-2 my-2 shadow active:scale-95 transition-all cursor-pointer"
       >
         立即购买
@@ -89,6 +89,9 @@
         </div>
       </div>
     </Teleport>
+    
+    <!-- 登录弹出窗口 -->
+    <Login :show="showLoginPopup" @close="handleLoginClose" @goToRegister="handleGoToRegister" />
   </div>
 </template>
 
@@ -101,16 +104,20 @@ import { faHome, faList, faBolt, faTimes, faThLarge } from '@fortawesome/free-so
 import { ElEmpty } from 'element-plus';
 import OrderComponent from '@/components/account/order.vue';
 import BuyDetailComponent from '@/views/buyDetail.vue';
+import Login from '@/views/login.vue';
 import * as api from '@/api';
+import { useUserStore } from '@/store/user';
 
 library.add(faHome, faList, faBolt, faTimes, faThLarge);
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
 const goodsId = route.query.id;
 const goodsDetail = ref({});
 const showOrderPopup = ref(false);
 const showBuyDetailPopup = ref(false);
+const showLoginPopup = ref(false);
 const active = ref(0); // 当前激活的导航项
 
 onMounted(() => {
@@ -129,6 +136,30 @@ const toggleOrderPopup = () => {
 
 const toggleBuyDetailPopup = () => {
   showBuyDetailPopup.value = !showBuyDetailPopup.value;
+}
+
+// 处理购买按钮点击
+const handleBuyClick = () => {
+  if (userStore.isLoggedIn) {
+    toggleBuyDetailPopup();
+  } else {
+    showLoginPopup.value = true;
+  }
+}
+
+// 处理登录窗口关闭事件
+const handleLoginClose = () => {
+  showLoginPopup.value = false;
+  // 如果用户已登录，显示购买弹窗
+  if (userStore.isLoggedIn) {
+    toggleBuyDetailPopup();
+  }
+}
+
+// 处理前往注册页面
+const handleGoToRegister = () => {
+  showLoginPopup.value = false;
+  router.push('/register');
 }
 
 // 导航到指定路由并设置active值

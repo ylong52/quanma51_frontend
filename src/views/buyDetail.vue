@@ -75,20 +75,28 @@
     </div>
     <!-- 底部支付按钮 -->
     <div class="bg-white border-t border-gray-200 z-10 w-full mt-4">
-      <button 
-        @click="handlePay" 
-        :disabled="isPaying"
-        class="block w-full text-center bg-orange-500 text-white text-base font-bold py-3 rounded-lg mx-auto shadow active:scale-95 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-      >
-        <span v-if="isPaying" class="flex items-center justify-center">
-          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          支付中...
-        </span>
-        <span v-else>立即支付</span>
-      </button>
+      <div class="flex gap-2 p-2">
+        <button 
+          @click="navigateToRecharge" 
+          class="flex-1 text-center bg-blue-500 text-white text-base font-bold py-3 rounded-lg shadow active:scale-95 transition-all"
+        >
+          余额充值
+        </button>
+        <button 
+          @click="handlePay" 
+          :disabled="isPaying"
+          class="flex-1 text-center bg-orange-500 text-white text-base font-bold py-3 rounded-lg shadow active:scale-95 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          <span v-if="isPaying" class="flex items-center justify-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            支付中...
+          </span>
+          <span v-else>立即支付</span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -135,7 +143,7 @@ const getProductDetail = async () => {
     if (res && res.data) {
       productDetails.value = res.data;
       productName.value = res.data.name || '未知商品';
-      productPrice.value = res.data.salePrice || '0.00';
+      productPrice.value = res.data.platform_price || '0.00';
       goodsDetail.value = res.data;
       
       // 初始化购买数量为商品最小购买数量
@@ -238,6 +246,10 @@ const handlePay = async () => {
     // 无论成功还是失败，都要重置支付状态
     isPaying.value = false;
   }
+};
+
+const navigateToRecharge = () => {
+  router.push('/personal/rechargelist');
 };
 </script>
 
