@@ -90,6 +90,12 @@
           <font-awesome-icon :icon="'lock'" class="w-6 h-6 mr-3" />修改密码
         </router-link>
         <router-link
+          to="/personal/payment-binding"
+          class="flex items-center rounded-lg px-4 py-3 bg-teal-500 text-white font-medium"
+        >
+          <font-awesome-icon :icon="'credit-card'" class="w-6 h-6 mr-3" />绑定账户
+        </router-link>
+        <router-link
           to="/"
           class="flex items-center rounded-lg px-4 py-3 bg-purple-500 text-white font-medium"
         >
@@ -109,7 +115,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
-import Login from "@/views/login.vue";
+import Login from "../login.vue";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { useRouter } from "vue-router";
@@ -144,7 +150,7 @@ import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import { useToast } from "vue-toast-notification";
 library.add(faUserCircle);
 import { useUserStore } from "../../store/user";
-import { getUserBalance } from "@/api";
+import { getUserBalance } from "../../api";
 const userStore = useUserStore();
 const router = useRouter();
 console.log(userStore.userInfo);
@@ -187,11 +193,15 @@ const userInfo = computed(() => {
 
 //获取用户余额
 const userBalance = async () => {
-  const res = await getUserBalance()
-  userStore.setBalance(res.balance)
-  // userInfo.balance 会自动响应式更新
+  try {
+    const res = await getUserBalance()
+    userStore.setBalance(res.balance)
+    // userInfo.balance 会自动响应式更新
+  } catch (error) {
+    console.error('获取用户余额失败:', error);
+    // 如果获取余额失败，不更新余额
+  }
 }
-userBalance();
 
 const showLoginPopup = ref(false);
 
@@ -199,6 +209,9 @@ const showLoginPopup = ref(false);
 onMounted(() => {
   if (!userInfo.value.isLoggedIn) {
     showLoginPopup.value = true;
+  } else {
+    // 如果用户已登录，获取用户余额
+    userBalance();
   }
 });
 

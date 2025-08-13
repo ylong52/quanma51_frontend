@@ -2,14 +2,19 @@
   <div class="min-h-screen bg-gray-100 flex flex-col">
     <div class="max-w-md mx-auto w-full p-4">
       <!-- 头部 -->
-      <div class="flex items-center bg-white   shadow px-3 py-3 mb-4 fixed top-0 left-0 right-0 z-20 max-w-md mx-auto w-full">
-        <router-link to="/personal/index" class="text-gray-500 text-lg mr-2">
-          <font-awesome-icon :icon="'user'" />
-        </router-link>
+      <div class="flex items-center bg-white shadow px-3 py-3 mb-4 fixed top-0 left-0 right-0 z-20 max-w-md mx-auto w-full">
+        <a @click="$router.back()" class="text-gray-500 text-lg mr-2 cursor-pointer">
+          <font-awesome-icon :icon="'arrow-left'" />
+        </a>
         <div class="flex-1 text-center text-lg font-bold text-gray-800">提现管理</div>
-        <router-link to="/personal/rechargelist" class="text-gray-500 text-lg mr-2">
-          充值
-        </router-link>
+        <div class="flex items-center space-x-3">
+          <router-link to="/personal/rechargelist" class="text-gray-500 text-lg">
+            <font-awesome-icon :icon="'wallet'" />
+          </router-link>
+          <router-link to="/personal/index" class="text-gray-500 text-lg">
+            <font-awesome-icon :icon="'user'" />
+          </router-link>
+        </div>
       </div>
       
       <!-- 登录检查 -->
@@ -23,7 +28,8 @@
         <div class="flex items-center">
           <font-awesome-icon :icon="'exclamation-circle'" class="text-yellow-500 mr-2" />
           <div class="text-sm text-gray-700">
-            为保障资金安全，提现将在1-3个工作日内处理，请耐心等待。
+            <p>为保障资金安全，提现将在1-2个工作日内处理，请耐心等待。</p>
+            <p>选择微信提现，请在24小时处理。否则会作废，要重新操作提现</p>
           </div>
         </div>
       </div>
@@ -37,43 +43,32 @@
         </div>
         <div v-show="showForm" class="px-4 py-4">
           <div class="mb-4">
-            <label class="block text-sm mb-1">提现金额</label>
+            <label class="block text-sm mb-1">提现金额*(最大免审金额为：{{ userStore.getConfig('recharge_fees') }}元)</label>
             <div class="relative">
               <font-awesome-icon :icon="'yen-sign'" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="number" class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-orange-400 text-base" placeholder="请输入提现金额" v-model="withdrawalAmount" v-if="userStore.userInfo.balance==0" disabled />
+              <el-input type="number" class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-orange-400 text-base" :max="amount_max" placeholder="请输入提现金额" v-model="withdrawalAmount"  @change="checkWithdrawalAmount" />
             </div>
             <p class="text-xs text-gray-400 mt-1">当前可提现余额: {{ userStore.userInfo.balance }}元</p>
           </div>
           <div class="mb-4">
-            <label class="block text-sm mb-1">收款账户</label>
-            <select v-model="paymentMethod" class="w-full border border-gray-200 rounded py-2 px-3 text-base" v-if="userStore.userInfo.balance==0" disabled>
-              <option value="alipay">支付宝</option>           
-              <option value="bank">银行卡</option>
-            </select>
-          </div>
-          <!-- 支付宝账号输入框 -->
-          <div class="mb-4" v-if="paymentMethod === 'alipay'">
-            <label class="block text-sm mb-1">支付宝账号</label>
-            <input type="text" class="w-full border border-gray-200 rounded py-2 px-3 text-base" placeholder="请输入支付宝账号"  v-model="withdrawalAlipayAccount" v-if="userStore.userInfo.balance==0" disabled />
-          </div>
-          <!-- 银行卡账号输入框 -->
-          <div class="mb-4" v-if="paymentMethod === 'bank'">
-            <label class="block text-sm mb-1">收款人姓名</label>
-            <input type="text" class="w-full border border-gray-200 rounded py-2 px-3 text-base" placeholder="收款人姓名" v-model="withdrawalBankName"  v-if="userStore.userInfo.balance==0" disabled />
-          </div>
-          <div class="mb-4" v-if="paymentMethod === 'bank'">
-            <label class="block text-sm mb-1">银行卡账号</label>
-            <input type="text" class="w-full border border-gray-200 rounded py-2 px-3 text-base" placeholder="请输入银行卡账号" v-model="withdrawalBankAccount" v-if="userStore.userInfo.balance==0" disabled />
+            <label class="text-red-500 text-sm mb-1"> 
+            <span v-if="account == ''">请先前往个人中心绑定提现账户</span>
+            <span v-else>{{ account }}</span>
+          </label>
           </div>
           
           <button 
             class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded mt-2 flex items-center justify-center" 
-            @click="handleWithdrawal"
+            @click="account == '' ? $router.push('/personal/payment-binding') : debouncedHandleWithdrawal()"
             :disabled="userStore.userInfo.balance <= 0"
-            :class="{'bg-gray-400 hover:bg-gray-400': userStore.userInfo.balance <= 0}"
+            :class="{'bg-black-400 hover:bg-black-400': userStore.userInfo.balance <= 0}"
           >
             <font-awesome-icon :icon="'paper-plane'" class="mr-2" />
-            {{ userStore.userInfo.balance <= 0 ? '余额为0不能提现' : '提交提现申请' }}
+            {{
+              userStore.userInfo.balance <= 0
+                ? '余额为0不能提现'
+                : (account == '' ? '请先绑定提现账户' : '提交提现申请')
+            }}
           </button>
            
         </div>
@@ -83,6 +78,13 @@
         <div class="flex items-center px-4 py-3 border-b border-gray-100">
           <font-awesome-icon :icon="'history'" class="text-blue-500 mr-2" />
           <span class="font-bold">提现记录</span>
+          <button 
+            @click="debouncedRefreshData" 
+            class="ml-auto text-blue-500 hover:text-blue-600 p-1 rounded"
+            :disabled="loading"
+          >
+            <font-awesome-icon :icon="loading ? 'spinner' : 'sync'" :class="{'animate-spin': loading}" />
+          </button>
         </div>
         <div class="px-4 py-4">
           <!-- 搜索和日期选择 -->
@@ -101,7 +103,7 @@
               </el-col>
               <el-col :span="8">
                 <div class="flex space-x-1">
-                  <el-button type="primary" @click="handleQuery" size="small">
+                  <el-button type="primary" @click="debouncedHandleQuery" size="small">
                     <font-awesome-icon :icon="'search'" class="mr-1" /> 查询
                   </el-button>
                   <!-- <el-button @click="resetFilters" size="small">
@@ -127,33 +129,40 @@
                     <span v-if="item.withdrawal_status === 0" class="text-xs bg-yellow-100 text-yellow-600 rounded px-1 py-0.5">待处理</span>
                     <span v-else-if="item.withdrawal_status === 1" class="text-xs bg-green-100 text-green-600 rounded px-1 py-0.5">已到账</span>
                     <span v-else-if="item.withdrawal_status === 2" class="text-xs bg-red-100 text-red-600 rounded px-1 py-0.5">失败</span>
+                    <span v-else-if="item.withdrawal_status === 3" class="text-xs bg-red-100 text-red-600 rounded px-1 py-0.5" @click="handleWechatConfirm(item)">微信待收款确认</span>
                   </div>
                 </div>
                 
                 <!-- 卡片内容：一行显示所有信息 -->
                 <div class="p-2">
-                  <div class="grid grid-cols-3 gap-1">
+                  <div class="grid grid-cols-4 gap-1">
                     <!-- 金额 -->
                     <div>
                       <div class="text-xs text-gray-500">金额</div>
                       <div class="text-sm text-orange-500 font-bold">¥{{ item.amount }}</div>
                     </div>
-                    
+                 
                     <!-- 提现方式和账号 -->
                     <div>
                       <div class="text-xs text-gray-500">账户</div>
                       <div class="text-xs">
-                        <span v-if="item.withdrawal_method == 1">银行卡</span>
-                        <span v-else-if="item.withdrawal_method == 2">支付宝</span>
-                        <span v-else>其他</span>
+                        <span v-if="item.withdrawal_type == 1">支付宝</span>
+                        <span v-else-if="item.withdrawal_type == 2">微信</span>
+                        
                       </div>
+                    </div>
+                    
+                    <!-- 时间 -->
+                    <div>
+                      <div class="text-xs text-gray-500">时间</div>
+                      <div class="text-xs text-gray-600">{{ item.withdrawal_time }}</div>
                     </div>
                     
                     <!-- 操作按钮 -->
                     <div class="flex justify-end items-end">
                       <button 
                         v-if="item.withdrawal_status === 0 || item.withdrawal_status === 2" 
-                        @click="deleteWithdrawal(item)" 
+                        @click="debouncedDeleteWithdrawal(item)" 
                         class="text-red-500 text-xs flex items-center bg-gray-50 rounded px-2 py-1"
                       >
                         <font-awesome-icon :icon="'trash'" class="mr-1" />
@@ -204,13 +213,16 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faUser, faCreditCard, faChevronDown, faChevronUp, faYenSign, faPaperPlane, faPlus, faHistory, faSearch, faSync, faTrash, faInbox, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
-library.add(faUser, faCreditCard, faChevronDown, faChevronUp, faYenSign, faPaperPlane, faPlus, faHistory, faSearch, faSync, faTrash, faInbox, faExclamationCircle);
+import { faUser, faCreditCard, faChevronDown, faChevronUp, faYenSign, faPaperPlane, faPlus, faHistory, faSearch, faSync, faTrash, faInbox, faExclamationCircle, faArrowLeft, faWallet, faSpinner } from '@fortawesome/free-solid-svg-icons';
+library.add(faUser, faCreditCard, faChevronDown, faChevronUp, faYenSign, faPaperPlane, faPlus, faHistory, faSearch, faSync, faTrash, faInbox, faExclamationCircle, faArrowLeft, faWallet, faSpinner);
 import * as api from '@/api';
 import { useUserStore } from '@/store/user';
 import { useToast } from "vue-toast-notification";
 import { ElMessage, ElMessageBox } from 'element-plus';
 import Login from '@/views/login.vue';
+import { useDebounce } from '@/utils/debounce';
+import { handleWeixinTransfer } from '@/utils/weixin.js';
+// import { WeixinDebugger } from '@/utils/weixinDebug.js';
 
 const userStore = useUserStore();
 const toast = useToast();
@@ -218,6 +230,9 @@ const searchStatus = ref('all');
 const withdrawalAmount = ref(0);
 const showForm = ref(false);
 const paymentMethod = ref('alipay'); // 默认选择支付宝
+const amount_max = userStore.userInfo.balance;
+
+ 
 
 // 登录状态管理
 const isLoggedIn = computed(() => {
@@ -234,10 +249,6 @@ const onLoginClose = () => {
     history.back();
   }
 };
-
-const withdrawalAlipayAccount = ref('');
-const withdrawalBankName = ref('');
-const withdrawalBankAccount = ref('');
 
 // 提现记录相关变量
 const tableData = ref([]);
@@ -311,6 +322,33 @@ function handleQuery() {
   // filteredData 会自动响应
 }
 
+// 防抖处理后的查询函数
+const debouncedHandleQuery = useDebounce(handleQuery, 500);
+
+// 刷新数据函数
+const refreshData = async () => {
+  try {
+    toast.info('正在刷新...', {
+      duration: 1000,
+      position: 'top'
+    });
+    await getWithdrawalRecord();
+    toast.success('刷新成功', {
+      duration: 2000,
+      position: 'top'
+    });
+  } catch (error) {
+    console.error('刷新失败:', error);
+    toast.error('刷新失败', {
+      duration: 2000,
+      position: 'top'
+    });
+  }
+};
+
+// 防抖处理后的刷新函数
+const debouncedRefreshData = useDebounce(refreshData, 1000);
+
 const resetFilters = () => {
   status.value = '';
   withdrawalId.value = '';
@@ -354,10 +392,18 @@ const deleteWithdrawal = (row) => {
   });
 };
 
-const handleWithdrawal = () => {
+// 防抖处理后的删除函数
+const debouncedDeleteWithdrawal = useDebounce(deleteWithdrawal, 1000);
+
+const handleWithdrawal = async () => {
   //判断是否有输入项
   if (withdrawalAmount.value == '' || withdrawalAmount.value == 0) {
     toast.error('请输入提现金额');
+    return;
+  }
+
+  if (withdrawalAmount.value-0 > amount_max-0) {
+    toast.error('提现金额不能大于' + amount_max + '元');
     return;
   }
 
@@ -365,42 +411,31 @@ const handleWithdrawal = () => {
     toast.error('请选择提现方式');
     return;
   }
-  if (paymentMethod.value == 'alipay') {
-    if (withdrawalAlipayAccount.value == '') {
-      toast.error('请输入支付宝账号');
-      return;
-    }
-  }
-  if (paymentMethod.value == 'bank') {
-    if (withdrawalBankName.value == '') { 
-      toast.error('请输入收款人姓名');
-      return;
-    }
-    if (withdrawalBankAccount.value == '') {
-      toast.error('请输入银行卡账号');
-      return;
-    }
-  }
-  //判断余额是否足够
-  if (withdrawalAmount.value > userStore.userInfo.balance) {
-    toast.error('余额不足');
-    return;
-  }
-  api.createUserWithdrawal({
-    amount: withdrawalAmount.value,
-    payment_method: paymentMethod.value,
-    withdrawal_alipay_account: withdrawalAlipayAccount.value,
-    withdrawal_bank_name: withdrawalBankName.value,
-    withdrawal_bank_account: withdrawalBankAccount.value
-  }).then(res => {
+
+  try {
+    const res = await api.createUserWithdrawal({      
+      amount: withdrawalAmount.value - 0,   
+    });
+    
     if (res.status == 'success') {
       getuserBalance();
-      toast.success('提现申请提交成功');
-      // 重新获取提现记录
       getWithdrawalRecord();
+      // toast.success(res.msg);
+      //ElMessageBox 提示，用户点确，才能关闭
+      ElMessageBox.alert(res.msg, '提示', {
+        confirmButtonText: '确定',
+        type: 'success',
+        dangerouslyUseHTMLString: true
+      });
     }
-  })
+  } catch (error) {
+    console.error('提现申请失败:', error);
+    toast.error('提现申请失败，请稍后再试');
+  }
 }
+
+// 防抖处理后的提现函数
+const debouncedHandleWithdrawal = useDebounce(handleWithdrawal, 1000);
 
 const getuserBalance = async () => {
   const res = await api.getUserBalance()
@@ -426,9 +461,135 @@ onMounted(() => {
   // 只有在用户已登录的情况下才加载数据
   if (isLoggedIn.value) {
     getuserBalance();
+    accountGetOne();
     getWithdrawalRecord(); // 加载提现记录
   }
 });
+
+const checkWithdrawalAmount = () => {
+  if (withdrawalAmount.value > userStore.userInfo.balance) {
+    toast.error('余额不足');
+    return false;
+  }
+}
+
+const account = ref("");
+  const accountGetOne = async () => {
+  try {
+    const res = await api.accountGetOne() 
+ 
+    // 检查res和res.data是否存在
+    if (!res || !res.data) {
+      account.value = "";
+      return false;
+    }
+    
+    if (res.data.use_accounttype == 0) {
+      //弹出未绑定提现账户
+      //toast.error('请前往个人中心，请先绑定提现账户');
+      account.value = "";
+      return false;
+    }
+    if (res.data.use_accounttype == 2 && (!res.data.wx_openid || res.data.wx_openid == '')) {
+      //弹出未绑定提现账户
+      // toast.error('请前往个人中心，请先绑定提现账户');
+      account.value = "";
+      return false;
+    }
+    if (res.data.use_accounttype == 1 && (res.data.alipay_account_number==null || res.data.alipay_account_number == '')) {
+      //弹出未绑定提现账户
+      // toast.error('请前往个人中心，请先绑定提现账户');
+      account.value = "";
+      return false;
+    }
+    account.value = res.data.use_accounttype;
+    if (res.data.use_accounttype == 2) {
+      account.value = "微信：" + res.data.wx_real_name;
+    }
+    if (res.data.use_accounttype == 1) {
+      account.value = "支付宝：".concat(res.data.alipay_account_number || '');
+    }
+    return true;
+  } catch (error) {
+    console.error('获取账户信息失败:', error);
+    account.value = "";
+    return false;
+  }
+}
+const wxPageData = ref({})
+
+// 显示状态信息
+const showStatus = (message, type = 'info') => {
+  if (type === 'success') {
+    toast.success(message)
+  } else if (type === 'error') {
+    toast.error(message)
+  } else {
+    toast.info(message)
+  }
+}
+
+// 检查转账状态
+const checkTransferStatus = async (transferId) => {
+  try {
+    console.log('检查转账状态...', transferId)
+    // 可以调用API检查转账状态
+    const res = await api.wxcheckTransferStatus(transferId)
+  } catch (error) {
+    console.error('检查转账状态失败:', error)
+  }
+}
+
+const handleWechatConfirm = async (item) => {
+  console.log('520 微信待收款确认:', item)
+  
+  try {
+    // 检查微信环境和转账支持
+    // WeixinDebugger.checkEnvironment()
+    // const transferSupport = WeixinDebugger.checkTransferSupport()
+    
+    // 简化环境检查，移除调试信息
+    const isWeixin = navigator.userAgent.toLowerCase().includes('micromessenger')
+    const hasWx = !!(window.wx || window.WeixinJSBridge)
+    
+    if (!isWeixin || !hasWx) {
+      showStatus('请在微信中打开', 'error')
+      return
+    }
+    
+    // 使用工具类处理微信转账
+    const result = await handleWeixinTransfer(item, (data) => api.userWithdrawalWechatConfirm(data))
+    
+    if (result.success) {
+      showStatus('确认请求已发送，请查看微信支付账单', 'success')
+      // 保存转账ID用于后续状态检查
+      // wxPageData.value.transferId = result.transferId
+      // 可以在这里轮询检查转账状态
+      // checkTransferStatus(result.transferId)
+      await api.wxcheckTransferStatus({"transferId":result.transferId})
+      await getWithdrawalRecord();
+    } else {
+      // 如果是签名错误，提供更详细的调试信息
+      if (result.originalError && result.originalError.includes('invalid signature')) {
+        console.error('签名验证失败，请检查服务器配置')
+        showStatus('微信配置失败，请联系客服', 'error')
+      } else {
+        showStatus(result.error, 'error')
+      }
+    }
+    
+  } catch (error) {
+    console.error('微信确认处理失败:', error)
+    
+    // 生成调试信息
+    // WeixinDebugger.generateDebugInfo({}, error)
+    
+    showStatus('处理失败，请重试', 'error')
+  }
+}
+
+
+
 
 </script>
 

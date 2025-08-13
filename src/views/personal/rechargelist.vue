@@ -4,11 +4,14 @@
       <div class="max-w-md mx-auto w-full p-4">
         <!-- 头部 -->
         <div
-          class="flex items-center bg-white   shadow px-3 py-3 mb-4 fixed top-0 left-0 right-0 z-20 max-w-md mx-auto w-full">
-          <router-link to="/personal/index" class="text-gray-500 text-lg mr-2">
+          class="flex items-center bg-white shadow px-3 py-3 mb-4 fixed top-0 left-0 right-0 z-20 max-w-md mx-auto w-full">
+          <a @click="$router.back()" class="text-gray-500 text-lg mr-2 cursor-pointer">
+            <font-awesome-icon :icon="'arrow-left'" />
+          </a>
+          <div class="flex-1 text-center text-lg font-bold text-gray-800">充值管理</div>
+          <router-link to="/personal/index" class="text-gray-500 text-lg ml-2">
             <font-awesome-icon :icon="'user'" />
           </router-link>
-          <div class="flex-1 text-center text-lg font-bold text-gray-800">充值管理</div>
         </div>
         
         <!-- 登录检查 -->
@@ -22,7 +25,7 @@
         <div class="flex items-center">
           <font-awesome-icon :icon="'exclamation-circle'" class="text-yellow-500 mr-2" />
           <div class="text-sm text-gray-700">
-            为便于规范化管理，优化服务流程，充值环节将附加手续费5%。
+            为便于规范化管理，优化服务流程，充值环节将附加手续费{{recharge_fees}}%。
           </div>
         </div>
       </div>
@@ -48,9 +51,10 @@
             </div>
             <div class="mb-4">
               <label class="block text-sm mb-1">充值方式</label>
+               
               <select class="w-full border border-gray-200 rounded py-2 px-3 text-base" v-model="rechargeMethod">
-                <option value="alipay">支付宝</option>
-                <option value="wechat">微信支付</option>
+                <option value="alipay" v-if="payment_method.includes('alipay')">支付宝</option>
+                <option value="wechat" v-if="payment_method.includes('wechat')">微信支付</option>
                
               </select>
             </div>
@@ -62,7 +66,7 @@
                   type="text"
                   class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded bg-gray-100 text-gray-500 focus:outline-none focus:border-orange-400 text-base"
                   placeholder="手续费"
-                  value="5%"
+                  :value="recharge_fees+'%'"
                   readonly
                   disabled
                 />
@@ -130,8 +134,8 @@
               <template v-else>
                 <div class="py-3 flex justify-between items-center" v-for="item in rechargeList" :key="item.id">
                   <div>
-                    <div class="text-orange-500 font-bold text-base">+{{ item.amount }}元</div>
-                    <div class="text-xs text-gray-400 mt-1">{{ item.payment_method_text }}</div>
+                    <div class="text-orange-500 font-bold text-base">+{{ item.total_amount }}元</div>
+                    <div class="text-xs text-gray-400 mt-1">支付方式：{{ item.payment_method_text }}</div>
                     <div class="text-xs text-gray-500 mt-1">订单号: {{ item.order_no || '-' }}</div>
                     <div class="text-xs text-gray-500 mt-1">充值金额: {{ item.amount || '-' }}元</div>
                     <div class="text-xs text-gray-500 mt-1">手续费: {{ item.handling_fee || '0' }}元</div>
@@ -176,14 +180,15 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faUser, faMoneyBillWave, faChevronDown, faChevronUp, faYenSign, faPlusCircle, faHistory, faSearch, faSync, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faMoneyBillWave, faChevronDown, faChevronUp, faYenSign, faPlusCircle, faHistory, faSearch, faSync, faExclamationCircle, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs';
 import { ElConfigProvider } from 'element-plus';
 import { ElMessage } from 'element-plus'; // Added ElMessage import
-library.add(faUser, faMoneyBillWave, faChevronDown, faChevronUp, faYenSign, faPlusCircle, faHistory, faSearch, faSync, faExclamationCircle);
+library.add(faUser, faMoneyBillWave, faChevronDown, faChevronUp, faYenSign, faPlusCircle, faHistory, faSearch, faSync, faExclamationCircle, faArrowLeft);
 import * as api from "@/api";
 import Login from '@/views/login.vue';
 import { useUserStore } from '@/store/user';
+import configHelper from '@/utils/configHelper'
 
 const userStore = useUserStore();
 
@@ -192,7 +197,8 @@ const isLoggedIn = computed(() => {
   return userStore.userInfo && userStore.userInfo.isLoggedIn;
 });
 const showLoginPopup = ref(true);
-
+const recharge_fees = ref(0);
+const payment_method = ref([])
 // 登录窗口关闭处理
 const onLoginClose = () => {
   showLoginPopup.value = false;
@@ -246,6 +252,11 @@ function handleCurrentChange(newPage) {
   rechargeRecord(); // 重新获取数据
 }
 
+const rechargeMethod = ref('alipay');
+const rechargeAmount = ref(100);
+const totalAmount = ref(calculateTotalFromAmount(100)); // Initialize with default value
+
+
 const rechargeList = ref([]);
 const isLoading = ref(false);
 
@@ -287,7 +298,20 @@ const rechargeRecord = async () => {
     } else {
       rechargeList.value = [];
     }
-
+    if (res.recharge_fees) {
+      recharge_fees.value = res.recharge_fees;
+      totalAmount.value = calculateTotalFromAmount(rechargeAmount.value);
+ 
+    }
+    payment_method.value = res.payment_method;
+    // 调试输出
+    console.log('payment_method 调试信息:', {
+      value: payment_method.value,
+      type: typeof payment_method.value,
+      isArray: Array.isArray(payment_method.value),
+      includes_apliay: payment_method.value?.includes('apliay'),
+      includes_wechat: payment_method.value?.includes('wechat')
+    });
     // 更新分页参数 - 修复分页计算
     if (res.pagination) {
       // 直接使用API返回的分页信息
@@ -315,7 +339,7 @@ const rechargeRecord = async () => {
       
       currentPage.value = Math.min(parseInt(res.data.pagination.current_page) || 1, actualPages || 1);
       pageSize.value = parseInt(res.data.pagination.per_page) || 8;
-      
+ 
       console.log('分页参数(res.data.pagination):', { 
         total: total.value, 
         currentPage: currentPage.value, 
@@ -338,6 +362,7 @@ const rechargeRecord = async () => {
   } catch (error) {
     console.error('获取充值记录失败:', error);
     rechargeList.value = [];
+    
     total.value = 0;
     currentPage.value = 1;
   } finally {
@@ -345,18 +370,16 @@ const rechargeRecord = async () => {
   }
 }
 
-const rechargeMethod = ref('alipay');
-const rechargeAmount = ref(100);
-const totalAmount = ref(calculateTotalFromAmount(100)); // Initialize with default value
 
 // 计算合计金额（含手续费）
 function calculateTotalFromAmount(amount) {
   if (!amount || isNaN(amount) || amount <= 0) {
     return '0';
   }
-  // 计算5%的手续费
-  const fee = parseFloat(amount) * 0.05;
-  const total = parseFloat(amount) + fee;
+  // 计算%的手续费
+
+  const total = parseFloat(amount) * (recharge_fees.value-0+100)/100;
+
   return total.toFixed(2);
 }
 
@@ -382,7 +405,7 @@ const handleRecharge = async () => {
     if (res.status == 'success' && res.payinfo.pay_info) {
       window.location.href = res.payinfo.pay_info;
     } else {
-      ElMessage.error(res.message || '创建充值订单失败');
+      ElMessage.error(res.message || '创建充值订单失败,请换一个支付方式');
     }
   } catch (error) {
     console.error('充值请求失败:', error);

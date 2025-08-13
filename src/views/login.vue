@@ -1,21 +1,18 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div v-if="internalShow" class="fixed inset-0 z-50 flex items-center justify-center">
       <!-- 遮罩层 -->
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click.self="emitClose"></div>
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"  ></div>
       <!-- 登录卡片 -->
       <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto overflow-hidden animate-fadeInUp">
-        <!-- 关闭按钮 -->
-        <button class="absolute top-3 right-3 text-gray-400 hover:text-primary text-xl z-10" @click="emitClose">
-          &times;
-        </button>
+         
         <div class="p-8">
           <div class="text-center mb-8">
             <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <i class="fa fa-user-circle text-3xl text-primary"></i>
             </div>
             <h2 class="text-2xl font-bold text-gray-800">欢迎回来</h2>
-            <p class="text-gray-500 mt-1">登录您的账户继续购物</p>
+            <p class="text-gray-500 mt-1">登录您的账户</p>
           </div>
           <!-- 登录表单 -->
           <form @submit.prevent="handleLogin">
@@ -67,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue'
+import { ref, defineProps, defineEmits, watch } from 'vue'
 import { useToast } from 'vue-toast-notification'
 import { useUserStore } from '../store/user'
 import * as api from '@/api';
@@ -75,6 +72,14 @@ import * as api from '@/api';
 const props = defineProps({ show: Boolean })
 const emit = defineEmits(['close', 'goToRegister', 'goToForgotPassword'])
 const userStore = useUserStore()
+
+// 内部控制显示状态
+const internalShow = ref(false)
+
+// 监听外部传入的show prop，同步到内部状态
+watch(() => props.show, (newVal) => {
+  internalShow.value = newVal
+}, { immediate: true })
 
 // 登录表单数据
 const form = ref({
@@ -102,7 +107,8 @@ const handleLogin = async () => {
         phone: res.data.user.phone,
         balance:res.data.user.balance
       });
-      emit('close');
+      internalShow.value = false  // 直接关闭自己
+      emit('close')  // 同时通知父组件
     } else {
       localStorage.removeItem('token')
        
@@ -115,7 +121,10 @@ const handleLogin = async () => {
   }
 }
 
-const emitClose = () => emit('close')
+const emitClose = () => {
+  internalShow.value = false  // 直接关闭自己
+  emit('close')  // 同时通知父组件（保持兼容性）
+}
 </script>
 
 <style scoped>

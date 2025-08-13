@@ -1,40 +1,34 @@
-import axios from 'axios';
-import { useToast } from 'vue-toast-notification'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/store/user'
 
 // 创建axios实例
 const service = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '',
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
-  },
-});
+    'Content-Type': 'application/json'
+  }
+})
 
 // 请求拦截器
 service.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token') || '';
+    // 从localStorage获取token
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`
     }
-    return config;
+    return config
   },
   (error) => {
-    console.error('请求错误:', error);
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
-);
+)
 
 // 响应拦截器
 service.interceptors.response.use(
   (response) => {
-    if (response.config.disableCodeCheck) {
-      return response.data;
-    }
-
     const res = response.data;
     switch (response.status) {
       case 200:
@@ -73,6 +67,7 @@ service.interceptors.response.use(
       localStorage.removeItem('token')
       sessionStorage.removeItem('userInfo')
       sessionStorage.removeItem('token')
+      const userStore = useUserStore()
       userStore.logout();
       return Promise.reject({});
     }else if (error.status == 400) {
@@ -89,21 +84,21 @@ service.interceptors.response.use(
       return Promise.reject({});
     }else {
       showError('网络错误', error.message || '网络连接失败');
-      return Promise.reject(res);
+      return Promise.reject(error);
     }
   }
 );
 
 // 错误提示函数
 function showError(title, message) {
-  useToast().error(message)
+  ElMessage.error(message)
 }
 
 // 重定向到登录页函数
 function redirectToLogin() {
   console.log('跳转到登录页面');
   // 实际项目中应使用路由跳转
-  router.push('/login');
+  // router.push('/login');
 }
 
 // 导出request对象

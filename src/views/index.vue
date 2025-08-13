@@ -34,6 +34,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faSignInAlt, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 library.add(faSignInAlt, faUserPlus);
+import * as api from '@/api/index'; 
 
 import { useUserStore } from '../store/user';
 const userStore = useUserStore();
@@ -52,14 +53,35 @@ const showToast = () => {
  
  
 onMounted(() => {
-  // if (localStorage.getItem('userInfo')) {
-  //   userStore.login(JSON.parse(localStorage.getItem('userInfo')))
-  //   isLogin.value = true;
-  // }
-  // if (sessionStorage.getItem('userInfo')) {
-  //   userStore.login(JSON.parse(sessionStorage.getItem('userInfo')))
-  //   isLogin.value = true;
-  // }
+ 
+   //取url的链接，判断是否有invite参数
+    const url = window.location.href;
+    const invite = url.split('invite=')[1];
+    if (invite) {
+      localStorage.setItem('invite', invite)
+    }
+   
+   // 获取全局配置并存储到store中
+   api.globalconfig().then(res => {   
+ 
+    if (res.data && res.data != null) {
+      // 将配置数据存储到store中
+      userStore.setConfig(res.data)
+      // console.log('配置已存储到store:', userStore.config)
+      
+      // 测试获取配置
+      const rechargeFees = userStore.getConfig('recharge_fees')
+      console.log('充值费用配置:', rechargeFees)
+      
+      
+    } else {
+      // console.warn('API返回的data为空或null')
+    }
+   }).catch(error => {
+    // console.error('获取全局配置失败:', error)
+   })
+   
+
 })
 </script>
 

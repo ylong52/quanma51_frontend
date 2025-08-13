@@ -3,23 +3,27 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite --force",
+    "dev": "vite --force --host 0.0.0.0", 
     "dev:clear": "vite --force --clearCache",
-    "build": "vite build",
-    "serve": "vite preview"
+    "build": "vite build --emptyOutDir --watch",
+    "serve": "vite preview",
+    "watch": "vite"
   },
+
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/vue-fontawesome": "^3.0.8",
+    "axios": "^1.7.0",
     "element-plus": "^2.10.4",
     "qrcode": "^1.5.4",
     "vue": "^3.2.0",
     "vue-toast-notification": "^3.1.3"
   },
   "devDependencies": {
+ 
     "@vitejs/plugin-vue": "^4.6.2",
     "autoprefixer": "^10.0.0",
     "axios": "^1.7.0",

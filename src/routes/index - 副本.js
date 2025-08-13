@@ -95,14 +95,19 @@ export default [
     component: () => import('@/views/personal/order.vue')
   },
   {
-    path: '/personal/rechargelist',
+    path: '/personal/recharge',
     name: 'recharge',
-    component: () => import('@/views/personal/rechargelist.vue')
+    component: () => import('@/views/personal/recharge.vue')
   },
   {
     path: '/personal/userWithdrawal',
     name: 'userWithdrawal',
     component: () => import('@/views/personal/userWithdrawal.vue')
+  },
+  {
+    path: '/personal/rechargelist',
+    name: 'rechargelist',
+    component: () => import('@/views/personal/rechargelist.vue')
   },
   {
     path: '/personal/promotion',
@@ -113,20 +118,6 @@ export default [
     path: '/personal/change-password',
     name: 'changePassword',
     component: () => import('@/views/personal/ChangePassword.vue')
-  },
-  {
-    path: '/personal/payment-binding',
-    name: 'paymentBinding',
-    component: () => import('@/views/personal/PaymentBinding.vue')
-  },
-  {
-    path: '/personal/apitest',
-    name: 'apitest',
-    component: () => import('@/views/ApiTest.vue')
-  },
-  // 添加通配符路由处理404
-  {
-    path: '/:pathMatch(.*)*',
-    redirect: '/'
   }
-]
+  
+] 

@@ -3,11 +3,14 @@
     <div class="min-h-screen bg-gray-100 flex flex-col">
       <div class="max-w-md mx-auto w-full p-4">
         <!-- 头部 -->
-        <div class="flex items-center bg-white   shadow px-3 py-3 mb-4 fixed top-0 left-0 right-0 z-20 max-w-md mx-auto w-full">
-          <router-link to="/personal/index" class="text-gray-500 text-lg mr-2">
+        <div class="flex items-center bg-white shadow px-3 py-3 mb-4 fixed top-0 left-0 right-0 z-20 max-w-md mx-auto w-full">
+          <a @click="$router.back()" class="text-gray-500 text-lg mr-2 cursor-pointer">
+            <font-awesome-icon :icon="'arrow-left'" />
+          </a>
+          <div class="flex-1 text-center text-lg font-bold text-gray-800">推广中心</div>
+          <router-link to="/personal/index" class="text-gray-500 text-lg ml-2">
             <font-awesome-icon :icon="'user'" />
           </router-link>
-          <div class="flex-1 text-center text-lg font-bold text-gray-800">推广中心</div>
         </div>
         <!-- 推广链接生成区 -->
         <div class="bg-white rounded-xl shadow mb-4 p-4 mt-12">
@@ -17,20 +20,41 @@
           <div class="mb-3">
    
             <div class="flex items-center bg-gray-50 rounded px-3 py-2">
-              <span class="text-gray-400 mr-1">https://mall.com/invite/</span>
-              <span class="font-medium text-gray-800">{{ inviteCode }}</span>
+              <span class="text-gray-400 mr-1">{{ getDomain }}</span>
+  
               <button @click="copyLink" class="ml-auto px-3 py-1 bg-blue-500 text-white rounded text-sm">复制</button>
             </div>
           </div>
           <!-- 二维码图片 -->
           <div class="flex flex-col items-center mt-4">
-            <img
-              :src="qrCodeUrl.value"
-              alt="推广二维码"
-              class="w-40 h-40 rounded shadow border border-gray-200 cursor-pointer"
-              @click="downloadQrCode"
-            />
+            <div class="relative cursor-pointer" @click="handleDownloadQRCode">
+              <QRCode 
+                :value="getDomain"
+                :size="300"
+                :foreground="'#FF6B6B'"
+                :background="'#F7F7F7'"
+                :margin="4"
+                :error-correction-level="'H'"
+              />
+              <!-- 下载遮罩层 -->
+              <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-300 rounded-lg flex items-center justify-center">
+                <div class="download-overlay opacity-0 hover:opacity-100 transition-opacity duration-300">
+                  <font-awesome-icon :icon="'download'" class="text-white text-2xl" />
+                  <span class="text-white text-sm ml-2">点击下载</span>
+                </div>
+              </div>
+            </div>
             <div class="text-xs text-gray-400 mt-2">点击二维码可保存到相册</div>
+            
+            <!-- 下载按钮 -->
+            <button 
+              @click="handleDownloadQRCode" 
+              class="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center"
+              :disabled="isDownloading"
+            >
+              <font-awesome-icon :icon="isDownloading ? 'spinner' : 'download'" :spin="isDownloading" class="mr-2" />
+              {{ isDownloading ? '下载中...' : '下载二维码' }}
+            </button>
           </div>
         </div>
         <!-- 推广数据统计 -->
@@ -116,16 +140,91 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
+import QRCode from '@/components/QRCode.vue'
+import { generateQRCode, downloadQRCode, generateQRCodeSVG } from '@/utils/qrcode.js'
+import { downloadEventManager } from '@/utils/downloadEvents.js'
+
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faUser, faUsers, faLink, faSearch, faTimesCircle, faYenSign, faSpinner } from '@fortawesome/free-solid-svg-icons';
-library.add(faUser, faUsers, faLink, faSearch, faTimesCircle, faYenSign, faSpinner);
-import QRCode from 'qrcode';
+import { faUser, faUsers, faLink, faSearch, faTimesCircle, faYenSign, faSpinner, faArrowLeft, faDownload } from '@fortawesome/free-solid-svg-icons';
+library.add(faUser, faUsers, faLink, faSearch, faTimesCircle, faYenSign, faSpinner, faArrowLeft, faDownload);
+ 
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs';
 import { ElConfigProvider } from 'element-plus';
 import * as api from '@/api';
-const channelTag = ref('');
-const inviteCode = ref('abc123');
+import { useUserStore } from '@/store/user';
+const userStore = useUserStore();
+ 
+const inviteCode = localStorage.getItem('userInfo')?JSON.parse(localStorage.getItem('userInfo')).userId:'';
+debugger;
+const getDomain =  import.meta.env.VITE_API_BASE_URL+'?invite='+inviteCode;
+
+const customColor = ref('#FF6B6B')
+const customBgColor = ref('#F7F7F7')
+const toolResult = ref(null)
+const isDownloading = ref(false)
+
+const handleDownloadQRCode = async () => {
+  // 使用事件管理器触发下载开始事件
+  downloadEventManager.triggerDownloadStart({
+    text: getDomain,
+    timestamp: new Date().toISOString()
+  })
+  
+  // 设置下载状态
+  isDownloading.value = true
+  
+  try {
+    await downloadQRCode(getDomain, `推广二维码-${Date.now()}.png`, {
+      width: 300,
+      color: { dark: '#FF6B6B', light: '#F7F7F7' }
+    })
+    
+    // 使用事件管理器触发下载成功事件
+    downloadEventManager.triggerDownloadSuccess({
+      text: getDomain,
+      filename: `推广二维码-${Date.now()}.png`,
+      timestamp: new Date().toISOString()
+    })
+    
+  } catch (error) {
+    console.error('下载失败:', error)
+    
+    // 使用事件管理器触发下载失败事件
+    downloadEventManager.triggerDownloadError({
+      text: getDomain,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    })
+  } finally {
+    isDownloading.value = false
+  }
+}
+
+const generateSVG = async () => {
+  try {
+    const svgString = await generateQRCodeSVG(getDomain, {
+      width: 200,
+      color: { dark: '#000000', light: '#FFFFFF' }
+    })
+    toolResult.value = { type: 'svg', data: svgString }
+  } catch (error) {
+    console.error('生成SVG失败:', error)
+  }
+}
+
+const generateWithTool = async () => {
+  try {
+    const dataURL = await generateQRCode(simpleText.value, {
+      width: 200,
+      color: { dark: '#000000', light: '#FFFFFF' }
+    })
+    toolResult.value = { type: 'image', data: dataURL }
+  } catch (error) {
+    console.error('生成失败:', error)
+  }
+}
+
 const searchKeyword = ref('');
 const currentPage = ref(1);
 const pageSize = ref(5);
@@ -158,8 +257,8 @@ function handleSizeChange(size) {
 }
 
 function copyLink() {
-  const linkText = `https://mall.com/invite/${inviteCode.value}`;
-  navigator.clipboard.writeText(linkText).then(() => {
+   
+  navigator.clipboard.writeText(getDomain).then(() => {
     alert('链接已复制到剪贴板');
   });
 }
@@ -217,14 +316,26 @@ onMounted(() => {
   fetchPromotionUsers();
 });
 
-function downloadQrCode() {
-  const a = document.createElement('a');
-  a.href = qrCodeUrl.value;
-  a.download = '推广二维码.png';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
+
 
 
 </script>
+
+<style scoped>
+.download-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 12px 16px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
+.download-overlay:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* 确保二维码容器有正确的圆角 */
+.relative {
+  border-radius: 8px;
+  overflow: hidden;
+}
+</style>
