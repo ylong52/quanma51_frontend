@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>分类页面</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            leftBg: '#F5F7FA', // 左侧导航背景色
+            rightBg: '#FFFFFF', // 右侧内容背景色
+            textDark: '#333333',
+            textGray: '#666666',
+            textLight: '#999999',
+            borderGray: '#E5E6EB',
+            cardBg: '#F9FAFC',
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .search-focus {
+        @apply border-primary ring-1 ring-primary/20;
+      }
+      .nav-item-active {
+        @apply text-primary bg-white border-l-2 border-primary font-medium;
+      }
+      .service-card {
+        @apply transition-all duration-200 hover:scale-105 hover:shadow-md;
+      }
+    }
+  </style>
+</head>
+<body class="bg-white font-sans text-textDark">
+  <div class="flex h-screen overflow-hidden flex-col">
+    <!-- 搜索栏 -->
+    <div class="p-3 border-b border-borderGray bg-white shadow-sm">
+      <div class="relative">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="搜索服务..." 
+          class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-cardBg border border-borderGray focus:outline-none focus:search-focus transition-all duration-200 text-sm"
+        >
+        <i class="fa fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-textLight"></i>
+      </div>
+    </div>
+    
+    <!-- 分类内容区 -->
+    <div class="flex flex-1 overflow-hidden">
+      <!-- 左侧导航 - 固定高度可滚动 -->
+      <div class="w-28 bg-leftBg flex-shrink-0 border-r border-borderGray overflow-y-auto scrollbar-hide h-full">
+        <ul class="py-2">
+          <li class="px-3 py-4 nav-item-active text-center">
+            <i class="fa fa-bolt block mx-auto mb-1"></i>生活缴费
+          </li>
+          <li class="px-3 py-4 text-textGray text-sm font-medium text-center hover:bg-gray-100 transition-colors">
+            <i class="fa fa-cutlery block mx-auto mb-1"></i>餐饮代下
+          </li>
+          <li class="px-3 py-4 text-textGray text-sm font-medium text-center hover:bg-gray-100 transition-colors">
+            <i class="fa fa-film block mx-auto mb-1"></i>影视会员
+          </li>
+          <li class="px-3 py-4 text-textGray text-sm font-medium text-center hover:bg-gray-100 transition-colors">
+            <i class="fa fa-music block mx-auto mb-1"></i>音频盛宴
+          </li>
+          <li class="px-3 py-4 text-textGray text-sm font-medium text-center hover:bg-gray-100 transition-colors">
+            <i class="fa fa-briefcase block mx-auto mb-1"></i>商务办公
+          </li>
+          <li class="px-3 py-4 text-textGray text-sm font-medium text-center hover:bg-gray-100 transition-colors">
+            <i class="fa fa-tag block mx-auto mb-1"></i>餐饮优惠
+          </li>
+          <li class="px-3 py-4 text-textGray text-sm font-medium text-center hover:bg-gray-100 transition-colors">
+            <i class="fa fa-gamepad block mx-auto mb-1"></i>生活娱乐
+          </li>
+          <li class="px-3 py-4 text-textGray text-sm font-medium text-center hover:bg-gray-100 transition-colors">
+            <i class="fa fa-graduation-cap block mx-auto mb-1"></i>知识教育
+          </li>
+          <li class="px-3 py-4 text-textGray text-sm font-medium text-center hover:bg-gray-100 transition-colors">
+            <i class="fa fa-book block mx-auto mb-1"></i>阅读文学
+          </li>
+          <li class="px-3 py-4 text-textGray text-sm font-medium text-center hover:bg-gray-100 transition-colors">
+            <i class="fa fa-cloud-download block mx-auto mb-1"></i>网盘加速
+          </li>
+          <li class="px-3 py-4 text-textGray text-sm font-medium text-center hover:bg-gray-100 transition-colors">
+            <i class="fa fa-gamepad block mx-auto mb-1"></i>游戏娱币
+          </li>
+        </ul>
+      </div>
+      
+      <!-- 右侧内容 - 固定高度可滚动 -->
+      <div class="flex-1 overflow-y-auto scrollbar-hide h-full bg-rightBg">
+        <div class="p-4">
+          <!-- 生活缴费分类 -->
+          <div class="mb-6" data-category="生活缴费">
+            <h2 class="text-lg font-semibold mb-3">生活缴费</h2>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="text-center service-item service-card" data-name="生活缴费">
+                <div class="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-bolt text-primary text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">生活缴费</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="京东慢充">
+                <div class="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-mobile text-primary text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">京东慢充</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="天猫话费">
+                <div class="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-shopping-cart text-primary text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">天猫话费</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 餐饮代下分类 -->
+          <div class="mb-6" data-category="餐饮代下">
+            <h2 class="text-lg font-semibold mb-3">餐饮代下</h2>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="text-center service-item service-card" data-name="网厅话费">
+                <div class="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-phone text-green-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">网厅话费</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="餐饮代下">
+                <div class="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-cutlery text-green-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">餐饮代下</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="瑞幸代下">
+                <div class="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-coffee text-green-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">瑞幸代下</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 影视会员分类 -->
+          <div class="mb-6" data-category="影视会员">
+            <h2 class="text-lg font-semibold mb-3">影视会员</h2>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="text-center service-item service-card" data-name="瑞幸单品">
+                <div class="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-coffee text-purple-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">瑞幸单品</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="肯德基">
+                <div class="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-hamburger text-purple-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">肯德基</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="塔斯汀代下">
+                <div class="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-cutlery text-purple-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">塔斯汀代下</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 音频盛宴分类 -->
+          <div class="mb-6" data-category="音频盛宴">
+            <h2 class="text-lg font-semibold mb-3">音频盛宴</h2>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="text-center service-item service-card" data-name="麦当劳代下">
+                <div class="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-hamburger text-orange-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">麦当劳代下</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="星巴克代下">
+                <div class="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-coffee text-orange-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">星巴克代下</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="知识教育">
+                <div class="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-graduation-cap text-orange-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">知识教育</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 商务办公分类 -->
+          <div class="mb-6" data-category="商务办公">
+            <h2 class="text-lg font-semibold mb-3">商务办公</h2>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="text-center service-item service-card" data-name="影视会员">
+                <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-film text-red-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">影视会员</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="腾讯视频">
+                <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-television text-red-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">腾讯视频</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="腾讯视频">
+                <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-television text-red-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">腾讯视频</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 餐饮优惠分类 -->
+          <div class="mb-6" data-category="餐饮优惠">
+            <h2 class="text-lg font-semibold mb-3">餐饮优惠</h2>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="text-center service-item service-card" data-name="腾讯视频">
+                <div class="w-14 h-14 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-television text-teal-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">腾讯视频</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="爱奇艺">
+                <div class="w-14 h-14 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-film text-teal-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">爱奇艺</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="云视听升级">
+                <div class="w-14 h-14 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-cloud text-teal-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">云视听升级</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 生活娱乐分类 -->
+          <div data-category="生活娱乐">
+            <h2 class="text-lg font-semibold mb-3">生活娱乐</h2>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="text-center service-item service-card" data-name="腾讯体育">
+                <div class="w-14 h-14 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-futbol-o text-indigo-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">腾讯体育</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="爱奇艺">
+                <div class="w-14 h-14 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-film text-indigo-600 text-xl"></i>
+                </div>
+                <span class="text-sm text-textDark">爱奇艺</span>
+              </div>
+              <div class="text-center service-item service-card" data-name="更多">
+                <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <i class="fa fa-plus text-gray-400 text-xl"></i>
+                </div>
+                <span class="text-sm text-textGray">更多</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 搜索无结果提示 -->
+          <div id="searchEmpty" class="hidden py-12 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fa fa-search text-gray-400 text-2xl"></i>
+            </div>
+            <p class="text-textGray">没有找到相关服务</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // 左侧导航切换效果
+    document.addEventListener('DOMContentLoaded', function() {
+      const navItems = document.querySelectorAll('.left-nav li');
+      navItems.forEach(item => {
+        item.addEventListener('click', function() {
+          // 移除所有活动状态
+          navItems.forEach(li => li.classList.remove('nav-item-active'));
+          
+          // 添加当前活动状态
+          this.classList.add('nav-item-active');
+        });
+      });
+      
+      // 搜索功能
+      const searchInput = document.getElementById('searchInput');
+      const serviceItems = document.querySelectorAll('.service-item');
+      const categories = document.querySelectorAll('[data-category]');
+      const searchEmpty = document.getElementById('searchEmpty');
+      
+      searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        let hasResults = false;
+        
+        // 隐藏所有分类
+        categories.forEach(cat => {
+          cat.classList.add('hidden');
+        });
+        
+        // 检查每个服务项
+        serviceItems.forEach(item => {
+          const serviceName = item.getAttribute('data-name').toLowerCase();
+          const category = item.closest('[data-category]');
+          
+          if (serviceName.includes(searchTerm)) {
+            category.classList.remove('hidden');
+            hasResults = true;
+          }
+        });
+        
+        // 显示无结果提示或结果
+        if (searchTerm && !hasResults) {
+          searchEmpty.classList.remove('hidden');
+          categories.forEach(cat => {
+            cat.classList.add('hidden');
+          });
+        } else {
+          searchEmpty.classList.add('hidden');
+        }
+      });
+      
+      // 添加搜索框聚焦效果
+      searchInput.addEventListener('focus', function() {
+        this.classList.add('search-focus');
+      });
+      
+      searchInput.addEventListener('blur', function() {
+        this.classList.remove('search-focus');
+      });
+    });
+  </script>
+</body>
+</html>
+    
