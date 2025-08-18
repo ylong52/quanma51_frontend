@@ -339,7 +339,7 @@ const handleBindAlipay = async () => {
     
     const data = {
       alipay_account_number: alipayForm.value.account,
-      real_name: alipayForm.value.name,
+      alipay_real_name: alipayForm.value.name,
        
     };
     
@@ -503,7 +503,7 @@ const handleSaveAlipay = async () => {
     
     const data = {
       alipay_account_number: alipayForm.value.account,
-      real_name: alipayForm.value.name,
+      alipay_real_name: alipayForm.value.name,
       use_accounttype: 1 // 1-支付宝
       // user_id 通常由后端从token中获取，前端不需要传递
     };
@@ -615,7 +615,7 @@ const initPage = async () => {
       alipayAccount.value = accountNumber.length > 4 ? 
         accountNumber.substring(0, 3) + '****' + accountNumber.substring(accountNumber.length - 4) : 
         accountNumber;
-      alipayName.value = alipayAccountData.real_name || '';
+      alipayName.value = alipayAccountData.alipay_real_name || '';
       alipayAccountId.value = alipayAccountData.id;
       alipayForm.value = {
         account: alipayAccountData.alipay_account_number || '', // 编辑时显示完整账户

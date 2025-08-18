@@ -26,7 +26,7 @@
           <font-awesome-icon :icon="'wallet'" class="text-orange-500 text-2xl mb-1" />
           <div class="font-bold text-lg text-gray-800">{{ userInfo.balance || '0.00' }}</div>
           <div class="text-xs text-gray-500 mt-1">账户余额(元)</div>
-    </div>
+        </div>
       </div>
       <!-- 我的订单 -->
       <div
@@ -150,7 +150,8 @@ import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import { useToast } from "vue-toast-notification";
 library.add(faUserCircle);
 import { useUserStore } from "../../store/user";
-import { getUserBalance } from "../../api";
+// import { getUserBalance } from "../../api";
+import * as api from '@/api';
 const userStore = useUserStore();
 const router = useRouter();
 console.log(userStore.userInfo);
@@ -194,8 +195,9 @@ const userInfo = computed(() => {
 //获取用户余额
 const userBalance = async () => {
   try {
-    const res = await getUserBalance()
-    userStore.setBalance(res.balance)
+    const res = await api.getUserBalance()
+ debugger;
+    userStore.setBalance(res.balance-0)
     // userInfo.balance 会自动响应式更新
   } catch (error) {
     console.error('获取用户余额失败:', error);

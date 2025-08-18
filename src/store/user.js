@@ -137,12 +137,18 @@ export const useUserStore = defineStore('user', () => {
 
   function setBalance(newBalance) {
     balance.value = newBalance
-    // 持久化
-    localStorage.setItem('userInfo', JSON.stringify({
-      username: username.value,
-      balance: balance.value,
-      isLoggedIn: isLoggedIn.value
-    }))
+    let userInfo = localStorage.getItem('userInfo')   
+    if(userInfo){
+      userInfo = JSON.parse(userInfo)
+    }
+    // 持久化 - 确保所有值都正确处理
+    const currentUserInfo = {
+      userId: userInfo.userId,
+      username: userInfo.username,
+      balance: balance.value || '0.00',
+      isLoggedIn: userInfo.isLoggedIn
+    }
+    localStorage.setItem('userInfo', JSON.stringify(currentUserInfo))
   }
 
     // 设置全局配置

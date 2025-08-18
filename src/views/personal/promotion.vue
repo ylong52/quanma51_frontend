@@ -103,14 +103,12 @@
               <div class="ml-3 flex-1 min-w-0">
                 <div class="font-medium text-gray-800 truncate">{{ user.user_info && user.user_info.id || '未知ID' }}</div>
                 <div class="text-xs text-gray-400 mt-1 truncate">姓名: {{ user.user_info && user.user_info.username || '未知' }}</div>
-                <div class="text-xs text-gray-400 mt-1 truncate">手机号: {{ user.user_info && user.user_info.phone || '未知' }}</div>
+               
                 <div class="text-xs text-gray-400 mt-1 truncate">奖励: {{ user.reward_amount || '0.00' }}</div>
                 <div class="text-xs text-gray-400 mt-1 truncate">状态: {{ user.reward_status == 1 ? '已发放' : '未发放' || '未知' }}</div>
                 <div class="text-xs text-gray-400 mt-1 truncate">注册时间: {{ user.registration_time || '未知' }}</div>
               </div>
-              <div class="text-right ml-2">
-                <span class="text-green-500 font-bold text-sm">+¥{{ user.reward || user.totalReward || '0.00' }}</span>
-              </div>
+              
             </div>
           </div>
           
@@ -156,7 +154,8 @@ import { useUserStore } from '@/store/user';
 const userStore = useUserStore();
  
 const inviteCode = localStorage.getItem('userInfo')?JSON.parse(localStorage.getItem('userInfo')).userId:'';
-debugger;
+ 
+ 
 const getDomain =  import.meta.env.VITE_API_BASE_URL+'?invite='+inviteCode;
 
 const customColor = ref('#FF6B6B')
@@ -268,17 +267,15 @@ watch(searchKeyword, () => {
   fetchPromotionUsers(); // 重新获取数据
 });
 
+const totalReward = ref(0);
 // 合计数据示例
 const totalInvites = computed(() => userList.value.length);
-const totalReward = computed(() => {
-  if (!userList.value.length) return '0.00';
-  return userList.value.reduce((sum, user) => sum + parseFloat(user.reward || user.totalReward || 0), 0).toFixed(2);
-});
+
 // 二维码生成与下载
-const qrCodeUrl = ref('');
-const qrText = computed(() => `https://mall.com/invite/${inviteCode.value}`);
+ 
+ 
 async function generateQr() {
-  qrCodeUrl.value = await QRCode.toDataURL(qrText.value, { width: 256, margin: 1 });
+   await QRCode.toDataURL(getDomain, { width: 256, margin: 1 });
 }
 watch([inviteCode], generateQr, { immediate: true });
 
@@ -302,6 +299,11 @@ const fetchPromotionUsers = async() => {
       userList.value = [];
       total.value = 0;
     }
+ 
+//reward_amount计算它
+ 
+    totalReward.value = userList.value.reduce((sum, user) => sum + parseFloat(user.reward_amount), 0).toFixed(2);
+
   } catch (error) {
     console.error('获取推广用户列表失败:', error);
     userList.value = [];

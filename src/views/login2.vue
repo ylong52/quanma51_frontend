@@ -43,7 +43,7 @@
               class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
             <label for="rememberMe" class="ml-2 block text-sm text-gray-700">记住我</label>
           </div>
-          <router-link to="/forgot-password" class="text-sm font-medium text-primary hover:text-primary/80 transition-custom">忘记密码?</router-link>
+          <!-- <router-link to="/forgot-password" class="text-sm font-medium text-primary hover:text-primary/80 transition-custom">忘记密码?</router-link> -->
         </div>
         <button type="submit"
           class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-lg transition-custom hover:transform hover:-translate-y-0.5"
@@ -89,6 +89,15 @@ const loading = ref(false)
 // 登录处理
 const handleLogin = async () => {
   loading.value = true
+  if (form.value.rememberMe) {
+    localStorage.setItem('rememberMe', 'true')
+    localStorage.setItem('username', form.value.username)
+    localStorage.setItem('password', form.value.password)
+  } else {
+    localStorage.removeItem('rememberMe')
+    localStorage.removeItem('username')
+    localStorage.removeItem('password')
+  }
   try {
     const res = await api.login(form.value)
     if (res.status === 'success') {
@@ -107,6 +116,7 @@ const handleLogin = async () => {
       localStorage.removeItem('token')
       // useToast().error(res.message || '登录失败')
     }
+
   } catch (error) {
     console.error('登录请求错误:', error)
     // useToast().error('登录失败，请稍后再试')
@@ -114,6 +124,14 @@ const handleLogin = async () => {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  const rememberMe = localStorage.getItem('rememberMe')
+  if (rememberMe) {
+    form.value.username = localStorage.getItem('username')
+    form.value.password = localStorage.getItem('password')
+  }
+})
 </script>
 
 <style scoped>

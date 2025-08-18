@@ -46,7 +46,7 @@
             <label class="block text-sm mb-1">提现金额*(最大免审金额为：{{ userStore.getConfig('recharge_fees') }}元)</label>
             <div class="relative">
               <font-awesome-icon :icon="'yen-sign'" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <el-input type="number" class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-orange-400 text-base" :max="amount_max" placeholder="请输入提现金额" v-model="withdrawalAmount"  @change="checkWithdrawalAmount" />
+              <el-input type="number" class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-orange-400 text-base" :max="amount_max" placeholder="请输入提现金额" v-model="withdrawalAmount"   />
             </div>
             <p class="text-xs text-gray-400 mt-1">当前可提现余额: {{ userStore.userInfo.balance }}元</p>
           </div>
@@ -96,6 +96,7 @@
                   <el-option label="待处理" value="0"></el-option>
                   <el-option label="已到账" value="1"></el-option>
                   <el-option label="失败" value="2"></el-option>
+                  <el-option label="未确认收款" value="3"></el-option>
                 </el-select>
               </el-col>
               <el-col :span="8">
@@ -129,7 +130,10 @@
                     <span v-if="item.withdrawal_status === 0" class="text-xs bg-yellow-100 text-yellow-600 rounded px-1 py-0.5">待处理</span>
                     <span v-else-if="item.withdrawal_status === 1" class="text-xs bg-green-100 text-green-600 rounded px-1 py-0.5">已到账</span>
                     <span v-else-if="item.withdrawal_status === 2" class="text-xs bg-red-100 text-red-600 rounded px-1 py-0.5">失败</span>
-                    <span v-else-if="item.withdrawal_status === 3" class="text-xs bg-red-100 text-red-600 rounded px-1 py-0.5" @click="handleWechatConfirm(item)">微信待收款确认</span>
+                    <span v-else-if="item.withdrawal_status === 3" class="text-xs bg-red-100 text-red-600 rounded px-1 py-0.5 flex items-center cursor-pointer" @click="handleWechatConfirm(item)">
+                      <font-awesome-icon v-if="wechatConfirmLoading === item.id" :icon="'spinner'" class="animate-spin mr-1" />
+                      {{ wechatConfirmLoading === item.id ? '处理中...' : '微信待收款确认' }}
+                    </span>
                   </div>
                 </div>
                 
@@ -253,6 +257,7 @@ const onLoginClose = () => {
 // 提现记录相关变量
 const tableData = ref([]);
 const loading = ref(false);
+const wechatConfirmLoading = ref(null); // 微信确认按钮的加载状态
 // 分页参数
 const currentPage = ref(1);
 const pageSize = ref(5);
@@ -401,11 +406,7 @@ const handleWithdrawal = async () => {
     toast.error('请输入提现金额');
     return;
   }
-
-  if (withdrawalAmount.value-0 > amount_max-0) {
-    toast.error('提现金额不能大于' + amount_max + '元');
-    return;
-  }
+ 
 
   if (paymentMethod.value == '') {
     toast.error('请选择提现方式');
@@ -466,12 +467,7 @@ onMounted(() => {
   }
 });
 
-const checkWithdrawalAmount = () => {
-  if (withdrawalAmount.value > userStore.userInfo.balance) {
-    toast.error('余额不足');
-    return false;
-  }
-}
+ 
 
 const account = ref("");
   const accountGetOne = async () => {
@@ -543,6 +539,9 @@ const checkTransferStatus = async (transferId) => {
 const handleWechatConfirm = async (item) => {
   console.log('520 微信待收款确认:', item)
   
+  // 设置加载状态
+  wechatConfirmLoading.value = item.id;
+  
   try {
     // 检查微信环境和转账支持
     // WeixinDebugger.checkEnvironment()
@@ -585,6 +584,9 @@ const handleWechatConfirm = async (item) => {
     // WeixinDebugger.generateDebugInfo({}, error)
     
     showStatus('处理失败，请重试', 'error')
+  } finally {
+    // 重置加载状态
+    wechatConfirmLoading.value = null;
   }
 }
 
