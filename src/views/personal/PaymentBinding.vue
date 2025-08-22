@@ -47,12 +47,12 @@
                   <div class="w-24 text-gray-500">真实姓名</div>
                   <div class="font-medium">{{ alipayName }}</div>
                 </div>
-                <div class="flex items-center">
+                <!-- <div class="flex items-center">
                   <div class="w-24 text-gray-500">是否当前使用</div>
                   <div class="flex items-center ml-2">
                     <el-radio v-model="currentPayment" label="1" @change="handleAlipayCurrentChange">是</el-radio>
                   </div>
-                </div>
+                </div> -->
               </div>
               
               <div class="flex gap-3 mt-4">
@@ -177,12 +177,12 @@
                   <div class="w-24 text-gray-500">微信账户</div>
                   <div class="font-medium">{{ wechatAccount }}</div>
                 </div>
-                <div class="flex items-center">
+                <!-- <div class="flex items-center">
                   <div class="w-24 text-gray-500">是否当前使用</div>
                   <div class="flex items-center ml-2">
                     <el-radio v-model="currentPayment" label="2" @change="handleWechatCurrentChange">是</el-radio>
                   </div>
-                </div>
+                </div> -->
               </div>
 
               <!-- 编辑模式下的按钮 -->

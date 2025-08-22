@@ -60,53 +60,64 @@
           <div class="text-xs">已退款</div>
         </router-link>
       </div>
+
+      
       <!-- 功能按钮区 -->
-      <div class="flex flex-col px-4 py-4 space-y-3">
-        <router-link
-          to="/personal/rechargelist"
-          class="flex items-center rounded-lg px-4 py-3 bg-orange-500 text-white font-medium"
-        >
-          <font-awesome-icon
-            :icon="'money-bill-wave'"
-            class="w-6 h-6 mr-3"
-          />充值管理
-        </router-link>
-        <router-link
-          to="/personal/userWithdrawal"
-          class="flex items-center rounded-lg px-4 py-3 bg-blue-500 text-white font-medium"
-        >
-          <font-awesome-icon :icon="'wallet'" class="w-6 h-6 mr-3" />提现管理
-        </router-link>
-        <router-link
-          to="/personal/promotion"
-          class="flex items-center rounded-lg px-4 py-3 bg-green-500 text-white font-medium"
-        >
-          <font-awesome-icon :icon="'bullhorn'" class="w-6 h-6 mr-3" />推广管理
-        </router-link>
-        <router-link
-          to="/personal/change-password"
-          class="flex items-center rounded-lg px-4 py-3 bg-indigo-500 text-white font-medium"
-        >
-          <font-awesome-icon :icon="'lock'" class="w-6 h-6 mr-3" />修改密码
-        </router-link>
-        <router-link
-          to="/personal/payment-binding"
-          class="flex items-center rounded-lg px-4 py-3 bg-teal-500 text-white font-medium"
-        >
-          <font-awesome-icon :icon="'credit-card'" class="w-6 h-6 mr-3" />绑定账户
-        </router-link>
-        <router-link
-          to="/"
-          class="flex items-center rounded-lg px-4 py-3 bg-purple-500 text-white font-medium"
-        >
-          <font-awesome-icon :icon="'home'" class="w-6 h-6 mr-3" />回到首页
-        </router-link>
-        <button
-          @click="handleLogout"
-          class="flex items-center rounded-lg px-4 py-3 bg-red-500 text-white font-medium"
-        >
-          <font-awesome-icon :icon="'sign-out-alt'" class="w-6 h-6 mr-3" />退出登录
-        </button>
+      <div class="px-4 py-4">
+        <div class="grid grid-cols-2 gap-4">
+          <router-link
+            to="/personal/rechargelist"
+            class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <font-awesome-icon
+              :icon="'money-bill-wave'"
+              class="w-8 h-8 mb-2 text-orange-500"
+            />
+            <div class="text-sm text-gray-700">充值管理</div>
+          </router-link>
+          <router-link
+            to="/personal/userWithdrawal"
+            class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <font-awesome-icon :icon="'wallet'" class="w-8 h-8 mb-2 text-blue-500" />
+            <div class="text-sm text-gray-700">提现管理</div>
+          </router-link>
+          <router-link
+            to="/personal/promotion"
+            class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <font-awesome-icon :icon="'bullhorn'" class="w-8 h-8 mb-2 text-green-500" />
+            <div class="text-sm text-gray-700">推广管理</div>
+          </router-link>
+          <router-link
+            to="/personal/change-password"
+            class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <font-awesome-icon :icon="'lock'" class="w-8 h-8 mb-2 text-indigo-500" />
+            <div class="text-sm text-gray-700">修改密码</div>
+          </router-link>
+          <router-link
+            to="/personal/payment-binding"
+            class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <font-awesome-icon :icon="'credit-card'" class="w-8 h-8 mb-2 text-teal-500" />
+            <div class="text-sm text-gray-700">绑定账户</div>
+          </router-link>
+          <router-link
+            to="/"
+            class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <font-awesome-icon :icon="'home'" class="w-8 h-8 mb-2 text-purple-500" />
+            <div class="text-sm text-gray-700">回到首页</div>
+          </router-link>
+          <button
+            @click="handleLogout"
+            class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <font-awesome-icon :icon="'sign-out-alt'" class="w-8 h-8 mb-2 text-red-500" />
+            <div class="text-sm text-gray-700">退出登录</div>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -196,7 +207,6 @@ const userInfo = computed(() => {
 const userBalance = async () => {
   try {
     const res = await api.getUserBalance()
- debugger;
     userStore.setBalance(res.balance-0)
     // userInfo.balance 会自动响应式更新
   } catch (error) {

@@ -43,31 +43,42 @@
         </div>
         <div v-show="showForm" class="px-4 py-4">
           <div class="mb-4">
-            <label class="block text-sm mb-1">提现金额*(最大免审金额为：{{ userStore.getConfig('recharge_fees') }}元)</label>
+            <label class="block text-sm mb-1">提现金额*(最大免审金额为：{{ userBalanceInfo.recharge_fees }}元)</label>
             <div class="relative">
               <font-awesome-icon :icon="'yen-sign'" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <el-input type="number" class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-orange-400 text-base" :max="amount_max" placeholder="请输入提现金额" v-model="withdrawalAmount"   />
             </div>
-            <p class="text-xs text-gray-400 mt-1">当前可提现余额: {{ userStore.userInfo.balance }}元</p>
+            <p class="text-xs text-gray-400 mt-1">当前可提现余额: {{ userBalanceInfo.balance }}元</p>
           </div>
           <div class="mb-4">
-            <label class="text-red-500 text-sm mb-1"> 
-            <span v-if="account == ''">请先前往个人中心绑定提现账户</span>
-            <span v-else>{{ account }}</span>
-          </label>
+            <div v-if="accountInfo.alipay == '' && accountInfo.wechat == ''">
+              <label class="text-red-500 text-sm mb-1"> 请先前往个人中心绑定提现账户</label>
+            </div>
+            <div v-else>
+              <el-select v-model="paymentMethod" placeholder="请选择提现方式" size="small" style="width: 100%" @change="handlePaymentMethodChange">
+                
+                <el-option label="微信" value="wechat" v-if="accountInfo.wechat != ''"></el-option>
+                <el-option label="支付宝" value="alipay" v-if="accountInfo.alipay != ''"></el-option>
+              </el-select>
+            </div>
           </div>
           
           <button 
-            class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded mt-2 flex items-center justify-center" 
-            @click="account == '' ? $router.push('/personal/payment-binding') : debouncedHandleWithdrawal()"
-            :disabled="userStore.userInfo.balance <= 0"
-            :class="{'bg-black-400 hover:bg-black-400': userStore.userInfo.balance <= 0}"
+            class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded mt-2 flex items-center justify-center withdrawal-button" 
+            @click="hasAccountBinding ? handleWithdrawalClick() : $router.push('/personal/payment-binding')"
+            :disabled="userBalanceInfo.balance <= 0 || withdrawalLoading"
+            :class="{
+              'bg-black-400 hover:bg-black-400': userBalanceInfo.balance <= 0,
+              'bg-gray-400 hover:bg-gray-400 cursor-not-allowed': withdrawalLoading
+            }"
           >
-            <font-awesome-icon :icon="'paper-plane'" class="mr-2" />
+            <font-awesome-icon :icon="withdrawalLoading ? 'spinner' : 'paper-plane'" :class="{'animate-spin': withdrawalLoading}" class="mr-2" />
             {{
-              userStore.userInfo.balance <= 0
-                ? '余额为0不能提现'
-                : (account == '' ? '请先绑定提现账户' : '提交提现申请')
+              withdrawalLoading
+                ? '正在提交...'
+                : (userBalanceInfo.balance <= 0
+                    ? '余额为0不能提现'
+                    : (hasAccountBinding ? '提交提现申请' : '请先绑定提现账户'))
             }}
           </button>
            
@@ -235,12 +246,18 @@ const withdrawalAmount = ref(0);
 const showForm = ref(false);
 const paymentMethod = ref('alipay'); // 默认选择支付宝
 const amount_max = userStore.userInfo.balance;
+const withdrawalLoading = ref(false); // 提现按钮加载状态
 
  
 
 // 登录状态管理
 const isLoggedIn = computed(() => {
   return userStore.userInfo && userStore.userInfo.isLoggedIn;
+});
+
+// 检查是否有账户绑定
+const hasAccountBinding = computed(() => {
+  return accountInfo.value.alipay !== '' || accountInfo.value.wechat !== '';
 });
 const showLoginPopup = ref(true);
 
@@ -265,7 +282,8 @@ const total = ref(0);
 // 筛选条件
 const status = ref('');
 const withdrawalId = ref('');
-
+const accountInfo = ref({"alipay":"","wechat":""})
+const userBalanceInfo = ref({balance:0,recharge_fees:0})
 // 获取提现记录
 const getWithdrawalRecord = async () => {
   try {
@@ -282,6 +300,11 @@ const getWithdrawalRecord = async () => {
     total.value = data.total;
     pageSize.value = data.per_page;
     currentPage.value = data.current_page;
+    //
+    accountInfo.value.alipay = res.accountInfo.alipay;
+    accountInfo.value.wechat = res.accountInfo.wechat;
+    userBalanceInfo.value.balance = res.userBalanceInfo.balance;
+    userBalanceInfo.value.recharge_fees = res.userBalanceInfo.recharge_fees;
   } catch (error) {
     console.error('获取提现记录失败:', error);
     toast.error('获取提现记录失败');
@@ -406,7 +429,24 @@ const handleWithdrawal = async () => {
     toast.error('请输入提现金额');
     return;
   }
- 
+
+  // 检查提现金额是否为有效数字
+  if (isNaN(withdrawalAmount.value) || withdrawalAmount.value <= 0) {
+    toast.error('请输入有效的提现金额');
+    return;
+  }
+
+  // 检查提现金额是否超过余额
+  if (withdrawalAmount.value > userBalanceInfo.value.balance) {
+    toast.error('提现金额不能超过当前余额');
+    return;
+  }
+
+  // 检查提现金额是否超过最大免审金额
+  if (withdrawalAmount.value > userBalanceInfo.value.recharge_fees) {
+    toast.error(`提现金额不能超过最大免审金额：${userBalanceInfo.value.recharge_fees}元`);
+    return;
+  }
 
   if (paymentMethod.value == '') {
     toast.error('请选择提现方式');
@@ -415,12 +455,15 @@ const handleWithdrawal = async () => {
 
   try {
     const res = await api.createUserWithdrawal({      
-      amount: withdrawalAmount.value - 0,   
+      amount: withdrawalAmount.value - 0,  
+      payment_method:paymentMethod.value 
     });
     
     if (res.status == 'success') {
-      getuserBalance();
+      // getuserBalance();
       getWithdrawalRecord();
+      // 清空提现金额
+      withdrawalAmount.value = 0;
       // toast.success(res.msg);
       //ElMessageBox 提示，用户点确，才能关闭
       ElMessageBox.alert(res.msg, '提示', {
@@ -435,12 +478,31 @@ const handleWithdrawal = async () => {
   }
 }
 
+// 提现按钮点击处理函数
+const handleWithdrawalClick = async () => {
+  if (withdrawalLoading.value) {
+    return; // 如果正在加载，直接返回，防止重复点击
+  }
+  
+  withdrawalLoading.value = true; // 设置加载状态
+  
+  try {
+    await handleWithdrawal();
+  } finally {
+    withdrawalLoading.value = false; // 无论成功还是失败，都要重置加载状态
+  }
+}
+
 // 防抖处理后的提现函数
-const debouncedHandleWithdrawal = useDebounce(handleWithdrawal, 1000);
+const debouncedHandleWithdrawal = useDebounce(handleWithdrawal, 3000);
 
 const getuserBalance = async () => {
-  const res = await api.getUserBalance()
-  userStore.setBalance(res.balance)  
+  try {
+    const res = await api.getUserBalance()
+    userStore.setBalance(res.balance)  
+  } catch (error) {
+    console.error('获取用户余额失败:', error);
+  }
 }
 
 // 监听搜索输入变化
@@ -461,58 +523,60 @@ watch(isLoggedIn, (newVal) => {
 onMounted(() => {
   // 只有在用户已登录的情况下才加载数据
   if (isLoggedIn.value) {
-    getuserBalance();
-    accountGetOne();
+    // getuserBalance();
+    // accountGetOne();
     getWithdrawalRecord(); // 加载提现记录
   }
 });
 
  
 
-const account = ref("");
-  const accountGetOne = async () => {
-  try {
-    const res = await api.accountGetOne() 
+// const account = ref("");
+//   const accountGetOne = async () => {
+//   try {
+//     const res = await api.accountGetOne() 
  
-    // 检查res和res.data是否存在
-    if (!res || !res.data) {
-      account.value = "";
-      return false;
-    }
+//     // 检查res和res.data是否存在
+//     if (!res || !res.data) {
+//       account.value = "";
+//       return false;
+//     }
     
-    if (res.data.use_accounttype == 0) {
-      //弹出未绑定提现账户
-      //toast.error('请前往个人中心，请先绑定提现账户');
-      account.value = "";
-      return false;
-    }
-    if (res.data.use_accounttype == 2 && (!res.data.wx_openid || res.data.wx_openid == '')) {
-      //弹出未绑定提现账户
-      // toast.error('请前往个人中心，请先绑定提现账户');
-      account.value = "";
-      return false;
-    }
-    if (res.data.use_accounttype == 1 && (res.data.alipay_account_number==null || res.data.alipay_account_number == '')) {
-      //弹出未绑定提现账户
-      // toast.error('请前往个人中心，请先绑定提现账户');
-      account.value = "";
-      return false;
-    }
-    account.value = res.data.use_accounttype;
-    if (res.data.use_accounttype == 2) {
-      account.value = "微信：" + res.data.wx_real_name;
-    }
-    if (res.data.use_accounttype == 1) {
-      account.value = "支付宝：".concat(res.data.alipay_account_number || '');
-    }
-    return true;
-  } catch (error) {
-    console.error('获取账户信息失败:', error);
-    account.value = "";
-    return false;
-  }
-}
-const wxPageData = ref({})
+//     if (res.data.use_accounttype == 0) {
+//       //弹出未绑定提现账户
+//       //toast.error('请前往个人中心，请先绑定提现账户');
+//       account.value = "";
+//       return false;
+//     }
+//     if (res.data.use_accounttype == 2 && (!res.data.wx_openid || res.data.wx_openid == '')) {
+//       //弹出未绑定提现账户
+//       // toast.error('请前往个人中心，请先绑定提现账户');
+//       account.value = "";
+//       return false;
+//     }
+//     if (res.data.use_accounttype == 1 && (res.data.alipay_account_number==null || res.data.alipay_account_number == '')) {
+//       //弹出未绑定提现账户
+//       // toast.error('请前往个人中心，请先绑定提现账户');
+//       account.value = "";
+//       return false;
+//     }
+//     account.value = res.data.use_accounttype;
+//     if (res.data.use_accounttype == 2) {
+//       let opend_id = res.data.wx_openid; //只显示前4位和后4位
+//       opend_id = opend_id.substring(0, 4) + '****' + opend_id.substring(opend_id.length - 4);
+//       account.value = "微信：" + opend_id;
+//     }
+//     if (res.data.use_accounttype == 1) {
+//       account.value = "支付宝：".concat(res.data.alipay_account_number || '');
+//     }
+//     return true;
+//   } catch (error) {
+//     console.error('获取账户信息失败:', error);
+//     account.value = "";
+//     return false;
+//   }
+// }
+// const wxPageData = ref({})
 
 // 显示状态信息
 const showStatus = (message, type = 'info') => {
@@ -591,6 +655,9 @@ const handleWechatConfirm = async (item) => {
 }
 
 
+const handlePaymentMethodChange=()=>{
+  console.log('提现方式变化:', paymentMethod.value)
+}
 
 
 </script>

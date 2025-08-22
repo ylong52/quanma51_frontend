@@ -91,6 +91,14 @@
           <div class="flex items-center px-4 py-3 border-b border-gray-100">
             <font-awesome-icon :icon="'history'" class="text-blue-500 mr-2" />
             <span class="font-bold">充值记录</span>
+           
+          <button 
+            @click="debouncedRefreshData" 
+            class="ml-auto text-blue-500 hover:text-blue-600 p-1 rounded"
+            :disabled="loading"
+          >
+            <font-awesome-icon :icon="loading ? 'spinner' : 'sync'" :class="{'animate-spin': loading}" />
+          </button>
           </div>
           <div class="px-4 py-4">
             <!-- 搜索和状态选择 -->
@@ -189,8 +197,11 @@ import * as api from "@/api";
 import Login from '@/views/login.vue';
 import { useUserStore } from '@/store/user';
 import configHelper from '@/utils/configHelper'
+import { useDebounce } from '@/utils/debounce';
+import { useToast } from "vue-toast-notification";
 
 const userStore = useUserStore();
+const toast = useToast();
 
 // 登录状态管理
 const isLoggedIn = computed(() => {
@@ -252,6 +263,16 @@ function handleCurrentChange(newPage) {
   rechargeRecord(); // 重新获取数据
 }
 
+// 计算合计金额（含手续费）
+function calculateTotalFromAmount(amount) {
+  if (!amount || isNaN(amount) || amount <= 0) {
+    return '0';
+  }
+  // 计算%的手续费
+  const total = parseFloat(amount) * (recharge_fees.value-0+100)/100;
+  return total.toFixed(2);
+}
+
 const rechargeMethod = ref('alipay');
 const rechargeAmount = ref(100);
 const totalAmount = ref(calculateTotalFromAmount(100)); // Initialize with default value
@@ -259,9 +280,11 @@ const totalAmount = ref(calculateTotalFromAmount(100)); // Initialize with defau
 
 const rechargeList = ref([]);
 const isLoading = ref(false);
+const loading = ref(false);
 
 const rechargeRecord = async () => {
   isLoading.value = true;
+  loading.value = true;
   try {
     // 构建API参数
     const apiParams = {
@@ -367,21 +390,12 @@ const rechargeRecord = async () => {
     currentPage.value = 1;
   } finally {
     isLoading.value = false;
+    loading.value = false;
   }
 }
 
 
-// 计算合计金额（含手续费）
-function calculateTotalFromAmount(amount) {
-  if (!amount || isNaN(amount) || amount <= 0) {
-    return '0';
-  }
-  // 计算%的手续费
 
-  const total = parseFloat(amount) * (recharge_fees.value-0+100)/100;
-
-  return total.toFixed(2);
-}
 
 // 当充值金额变化时更新合计
 function calculateTotal() {
@@ -427,6 +441,35 @@ onMounted(() => {
     rechargeRecord();
   }
 });
+
+
+// 防抖处理后的查询函数
+const debouncedHandleQuery = useDebounce(handleQuery, 500);
+
+// 刷新数据函数
+const refreshData = async () => {
+  try {
+    toast.info('正在刷新...', {
+      duration: 1000,
+      position: 'top'
+    });
+    await rechargeRecord();
+    toast.success('刷新成功', {
+      duration: 2000,
+      position: 'top'
+    });
+  } catch (error) {
+    console.error('刷新失败:', error);
+    toast.error('刷新失败', {
+      duration: 2000,
+      position: 'top'
+    });
+  }
+};
+
+
+// 防抖处理后的刷新函数
+const debouncedRefreshData = useDebounce(refreshData, 1000);
 </script>
 
 <style scoped>
